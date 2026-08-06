@@ -18,9 +18,12 @@ from services.session_service import save_session
 from services.pdf_service import generate_report_pdf
 
 
+FONT_LINKS = """
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+"""
+
 GLOBAL_CSS = """<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/icon?family=Material+Icons+Round');
 
 /* ── Self-collapsing injection (removes blank space Streamlit creates) ─ */
 [data-testid="stMarkdownContainer"]:has(> style:only-child) {
@@ -397,8 +400,8 @@ def render_setup_screen():
         """
         <div class="ip-hero">
             <div class="ip-hero-badge">
-                <span class="material-icons-round" style="font-size:14px;">auto_awesome</span>
-                Powered by LangGraph Agentic AI
+                <span class="material-icons-round" style="font-size:14px;">code</span>
+                A Project by Muskan
             </div>
             <div class="ip-hero-title">InterviewPilot</div>
             <p class="ip-hero-sub">
@@ -753,6 +756,9 @@ def main():
         layout="wide",
     )
     init_session_state()
+
+    # Inject font links (must be outside <style> for Streamlit sandbox)
+    st.markdown(FONT_LINKS, unsafe_allow_html=True)
 
     # Inject global CSS once — self-collapsing rule keeps it zero-height
     st.markdown(GLOBAL_CSS, unsafe_allow_html=True)
