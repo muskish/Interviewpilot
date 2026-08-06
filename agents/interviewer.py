@@ -121,13 +121,12 @@ def generate_question(
         )
     except Exception as exc:
         logger.error("Interviewer failed to generate question via LLM, using fallback: %s", exc)
-        q_type = QuestionType.OPENING if state.current_turn == 0 else QuestionType.CORE
+        q_type = QuestionType.OPENING if state.current_turn == 0 else QuestionType.NEW_TOPIC
         question = InterviewerQuestion(
             question=f"Could you explain your technical experience and key engineering principles when working with {target_topic}?",
             question_type=q_type,
             topic=target_topic,
             difficulty=target_difficulty,
-            rationale="Fallback question generated to ensure uninterrupted session progress.",
         )
 
     logger.info(
