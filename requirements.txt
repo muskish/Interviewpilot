@@ -30,3 +30,6 @@ pypdf==6.15.0
 # --- Multimodal (Audio/Voice) ---
 audio-recorder-streamlit==0.0.10
 gTTS==2.5.1
+
+# --- Vector DB / Embeddings (RAG) ---
+faiss-cpu==1.10.0

@@ -28,8 +28,11 @@ Highlight 2-4 specific areas where the candidate struggled, lacked depth, or gav
 ## Evidence From Your Answers
 Directly reference specific turns and quote the candidate's actual words to illustrate both strengths and gaps.
 
-## Priority Practice Plan
+## Action Plan & Recommended Study Resources
 Provide 2-3 prioritized, concrete practice exercises or studying tasks tailored specifically to their key gaps.
+
+## Peer Benchmarking
+Compare the candidate's performance against the retrieved historical vector database profiles in the prompt context. Note where they stand relative to peers.
 
 ## Example Improvement Approach
 Show an example of how one of their weaker answers could be restructured or improved to score higher (e.g., using STAR technique or adding technical depth).

@@ -59,6 +59,14 @@ def generate_coaching_report(state: InterviewState) -> str:
             f"  Evaluation Dimensions: {', '.join(state.strategy.evaluation_dimensions)}\n"
         )
 
+    from services.benchmark_service import retrieve_peer_benchmarks
+
+    peer_context = retrieve_peer_benchmarks(
+        target_role=state.candidate.target_role,
+        focus_area=state.candidate.focus_area.value,
+        background=state.candidate.background,
+    )
+
     user_message = (
         f"Candidate Profile:\n"
         f"  Target Role: {state.candidate.target_role}\n"
@@ -66,9 +74,11 @@ def generate_coaching_report(state: InterviewState) -> str:
         f"  Background: {state.candidate.background or '(not provided)'}\n\n"
         f"{strategy_info}\n"
         f"Interview Progress: Completed {state.current_turn} of max {state.max_turns} turns.\n\n"
+        f"Historical Candidate Vector DB Benchmark Context (FAISS RAG):\n"
+        f"{peer_context}\n\n"
         f"Full Transcript & Turn Evaluations:\n"
         f"{format_full_transcript_and_evaluations(state)}\n\n"
-        f"Synthesize the complete interview session and write the final Markdown coaching report now."
+        f"Synthesize the complete interview session and write the final Markdown coaching report now, including a Peer Benchmarking section."
     )
 
     logger.info("Coach: generating final report for session=%s turns=%d", state.session_id, state.current_turn)
