@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import re
 import time
-from typing import TypeVar
+from typing import Any, TypeVar
 
 from langchain_core.language_models.chat_models import BaseChatModel
 from pydantic import BaseModel, ValidationError
@@ -53,16 +53,75 @@ def get_llm(temperature: float | None = None) -> BaseChatModel:
 
 
 def _extract_json(text: str) -> dict:
-    """Extract JSON object from markdown codeblock or raw text string."""
-    # Search for ```json { ... } ``` block first
-    match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
-    if match:
-        return json.loads(match.group(1))
-    # Search for raw { ... }
-    match = re.search(r"(\{.*\})", text, re.DOTALL)
-    if match:
-        return json.loads(match.group(1))
-    return json.loads(text.strip())
+    """Robustly extract and parse a JSON dict from raw LLM text using brace counting."""
+    text = text.strip()
+
+    # 1. Direct json loads if it's pure JSON
+    try:
+        res = json.loads(text)
+        if isinstance(res, dict):
+            return res
+    except Exception:
+        pass
+
+    # 2. Extract content from markdown ```json ... ``` codeblock
+    codeblock_match = re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL)
+    if codeblock_match:
+        try:
+            res = json.loads(codeblock_match.group(1).strip())
+            if isinstance(res, dict):
+                return res
+        except Exception:
+            pass
+
+    # 3. Match outer opening '{' to corresponding closing '}' with string awareness
+    start_idx = text.find("{")
+    if start_idx != -1:
+        brace_count = 0
+        in_string = False
+        escape = False
+        for i in range(start_idx, len(text)):
+            char = text[i]
+            if escape:
+                escape = False
+                continue
+            if char == "\\" and in_string:
+                escape = True
+                continue
+            if char == '"':
+                in_string = not in_string
+                continue
+            if not in_string:
+                if char == "{":
+                    brace_count += 1
+                elif char == "}":
+                    brace_count -= 1
+                    if brace_count == 0:
+                        candidate = text[start_idx : i + 1]
+                        res = json.loads(candidate)
+                        if isinstance(res, dict):
+                            return res
+
+    return json.loads(text)
+
+
+def _normalize_dict_for_enums(data: Any) -> Any:
+    """Recursively convert uppercase Enum values to lowercase for Pydantic enum matching."""
+    if isinstance(data, dict):
+        new_dict = {}
+        for k, v in data.items():
+            if isinstance(v, str) and v.isupper() and "_" in v:
+                new_dict[k] = v.lower()
+            elif isinstance(v, str) and v.isupper() and len(v) < 20:
+                new_dict[k] = v.lower()
+            elif isinstance(v, (dict, list)):
+                new_dict[k] = _normalize_dict_for_enums(v)
+            else:
+                new_dict[k] = v
+        return new_dict
+    if isinstance(data, list):
+        return [_normalize_dict_for_enums(x) for x in data]
+    return data
 
 
 def generate_structured(
@@ -75,15 +134,14 @@ def generate_structured(
     """
     Call the LLM and force its response into `output_model` (a Pydantic model).
 
-    Uses a 3-tier fallback hierarchy:
+    Uses a 3-tier fallback hierarchy with brace counting and enum normalization:
     1. LangChain structured output (tool-calling API)
     2. json_mode fallback (Groq JSON format)
-    3. Text generation + regex JSON extraction + Pydantic schema validation
+    3. Text generation + brace-count JSON extraction + Pydantic schema validation
     """
     retries = settings.llm_max_retries if max_retries is None else max_retries
     last_error: Exception | None = None
 
-    # Guarantee "json" is present in user message for Groq json_mode compatibility
     formatted_user_msg = user_message
     if "json" not in formatted_user_msg.lower():
         try:
@@ -109,14 +167,17 @@ def generate_structured(
             if isinstance(result, output_model):
                 return result
             if isinstance(result, dict):
-                return output_model.model_validate(result)
+                normalized = _normalize_dict_for_enums(result)
+                return output_model.model_validate(normalized)
             if isinstance(result, str):
-                return output_model.model_validate(_extract_json(result))
+                parsed = _extract_json(result)
+                normalized = _normalize_dict_for_enums(parsed)
+                return output_model.model_validate(normalized)
         except Exception as exc:
             last_error = exc
             logger.warning("generate_structured: attempt %d/%d API call failed: %s", attempt, retries + 1, exc)
 
-        # Tier 3: Direct text completion + regex extraction fallback
+        # Tier 3: Direct text completion + brace counting fallback
         try:
             logger.info("generate_structured: attempting Tier 3 text completion fallback...")
             raw_text = generate_text(
@@ -125,7 +186,8 @@ def generate_structured(
                 user_message=formatted_user_msg,
             )
             parsed_dict = _extract_json(raw_text)
-            validated = output_model.model_validate(parsed_dict)
+            normalized_dict = _normalize_dict_for_enums(parsed_dict)
+            validated = output_model.model_validate(normalized_dict)
             logger.info("generate_structured: Tier 3 fallback successfully parsed %s!", output_model.__name__)
             return validated
         except Exception as exc3:
