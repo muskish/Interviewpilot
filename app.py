@@ -759,14 +759,17 @@ def render_final_report_screen(state: InterviewState):
             )
     with col_d2:
         if state.final_report:
-            pdf_bytes = generate_report_pdf(state)
-            st.download_button(
-                label="Report (.pdf)",
-                data=pdf_bytes,
-                file_name=f"InterviewPilot_Report_{state.session_id}.pdf",
-                mime="application/pdf",
-                use_container_width=True,
-            )
+            try:
+                pdf_bytes = generate_report_pdf(state)
+                st.download_button(
+                    label="Report (.pdf)",
+                    data=pdf_bytes,
+                    file_name=f"InterviewPilot_Report_{state.session_id}.pdf",
+                    mime="application/pdf",
+                    use_container_width=True,
+                )
+            except Exception as pdf_err:
+                st.warning("PDF export unavailable.")
     with col_d3:
         st.download_button(
             label="Session (.json)",
