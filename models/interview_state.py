@@ -9,7 +9,7 @@ from __future__ import annotations
 import uuid
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from models.candidate import CandidateProfile
 from models.evaluation import RecommendedAction
@@ -28,6 +28,8 @@ class InterviewStatus(str, Enum):
 
 
 class InterviewState(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     session_id: str = Field(default_factory=lambda: uuid.uuid4().hex[:12])
 
     candidate: CandidateProfile

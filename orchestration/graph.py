@@ -171,9 +171,20 @@ def run_answer_turn(state: InterviewState, answer: str) -> InterviewState:
 
     # 2. Add turn to transcript
     new_turn_num = state.current_turn + 1
+    current_q = state.current_question
+    if isinstance(current_q, dict):
+        current_q = InterviewerQuestion.model_validate(current_q)
+    elif current_q is None:
+        current_q = InterviewerQuestion(
+            question=f"Could you tell me about your background in {state.candidate.target_role}?",
+            question_type=QuestionType.OPENING,
+            topic=state.current_topic or "General",
+            difficulty=state.current_difficulty,
+        )
+
     turn = InterviewTurn(
         turn_number=new_turn_num,
-        question=state.current_question,
+        question=current_q,
         answer=answer,
         evaluation=eval_result,
     )

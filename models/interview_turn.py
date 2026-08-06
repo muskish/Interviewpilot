@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from models.evaluation import EvaluationResult
 from models.interview_plan import DIFFICULTY_MAX, DIFFICULTY_MIN
@@ -19,6 +19,8 @@ class QuestionType(str, Enum):
 
 
 class InterviewerQuestion(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     question: str = Field(..., min_length=1)
     question_type: QuestionType
     topic: str
@@ -26,6 +28,8 @@ class InterviewerQuestion(BaseModel):
 
 
 class InterviewTurn(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     turn_number: int = Field(..., ge=1)
     question: InterviewerQuestion
     answer: str
