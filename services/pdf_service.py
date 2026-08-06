@@ -147,10 +147,13 @@ def generate_report_pdf(state) -> bytes:
         pdf.cell(box_w - 6, 7, value)
         pdf.set_xy(start_x, pdf.get_y() - 7)
 
+    pdf.set_x(10)
     pdf.ln(box_h + 8)
+    pdf.set_x(10)
 
     # ── Main Coaching Report ──────────────────────────────────────────
     if state.final_report:
+        pdf.set_x(10)
         pdf.set_font("Helvetica", "B", 12)
         pdf.set_text_color(*_TEXT_1)
         pdf.cell(0, 8, "Coaching Report", ln=True)
@@ -163,6 +166,7 @@ def generate_report_pdf(state) -> bytes:
             stripped = line.strip()
             if not stripped:
                 pdf.ln(3)
+                pdf.set_x(10)
                 continue
 
             # Detect heading lines
@@ -171,11 +175,13 @@ def generate_report_pdf(state) -> bytes:
                 level = len(heading_match.group(1))
                 heading_text = heading_match.group(2)
                 pdf.ln(3)
+                pdf.set_x(10)
                 pdf.set_font("Helvetica", "B", max(14 - level * 2, 10))
                 pdf.set_text_color(*_ACCENT if level == 1 else _TEXT_1)
                 pdf.multi_cell(0, 7, _strip_md(heading_text))
                 pdf.set_font("Helvetica", "", 10)
                 pdf.set_text_color(*_TEXT_1)
+                pdf.set_x(10)
                 continue
 
             # Detect horizontal rule
@@ -185,9 +191,11 @@ def generate_report_pdf(state) -> bytes:
                 pdf.set_line_width(0.3)
                 pdf.line(10, pdf.get_y(), 200, pdf.get_y())
                 pdf.ln(4)
+                pdf.set_x(10)
                 continue
 
             # Regular text
+            pdf.set_x(10)
             pdf.multi_cell(0, 5.5, _strip_md(stripped))
 
     pdf.ln(6)
