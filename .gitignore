@@ -1,0 +1,22 @@
+# Environment / secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# Session data (generated at runtime, not source)
+sessions/*.json
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/

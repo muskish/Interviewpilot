@@ -1,0 +1,28 @@
+# --- UI ---
+streamlit==1.61.1
+
+# --- Orchestration ---
+langgraph==1.2.10
+
+# --- LLM integration (LangChain core + all supported providers) ---
+langchain==1.3.14
+langchain-core==1.5.3
+langchain-groq==1.1.3
+langchain-openai==1.4.1
+langchain-anthropic==1.5.3
+langchain-ollama==1.1.0
+
+# --- Data / config ---
+pydantic==2.13.4
+pydantic-settings==2.14.2
+python-dotenv==1.2.2
+
+# --- Testing ---
+pytest==9.1.1
+
+# --- Raw provider SDKs (used only by test_api_connection.py for a quick,
+#     LangChain-independent sanity check of your API key before Phase 2) ---
+groq==0.32.0
+openai==2.53.0
+anthropic==0.120.2
+
