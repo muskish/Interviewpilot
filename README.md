@@ -110,6 +110,25 @@ python -m pytest tests/
 
 ---
 
+## 🏗️ Key Design Decisions & Tradeoffs
+
+1. **Deterministic vs. LLM Decision Engine**: We chose a deterministic, non-LLM Decision Engine to route the conversation and adjust difficulty. **Tradeoff**: While an LLM could handle subtle state transitions, a deterministic Python router ensures 100% stable state-machine boundaries, preventing "infinite loop" failures during rate limits and providing strict control over the interview length (max 5-7 turns).
+2. **LangGraph State Orchestration**: The conversation flow uses LangGraph rather than a simple Python loop. **Tradeoff**: This adds boilerplate graph compilation logic, but enables clean "checkpointing" of state, allowing the UI to safely retry failed nodes (e.g., if the Evaluator hits a rate limit) without losing the entire interview context.
+3. **Multi-Agent Decoupling**: Strategist, Interviewer, and Evaluator are distinct agents with isolated prompts. **Tradeoff**: Higher token usage since context must be re-injected for each agent. However, this ensures each agent maintains a strong persona (e.g., the Evaluator doesn't accidentally start generating questions) and allows specialized output parsing (e.g., JSON schema for Evaluator, Markdown string for Coach).
+4. **Pydantic Validation**: We heavily utilize Pydantic `BaseModel` for all agent outputs. **Tradeoff**: Requires strict formatting from the LLM, but guarantees structured data for the frontend UI (e.g., rendering charts based on strict numerical 1-5 scores) and eliminates Regex hacks.
+
+---
+
+## 📜 Example Interview Transcripts
+
+We have recorded example JSON session transcripts in the `examples/` directory to demonstrate the system's adaptability:
+
+- 🌟 **[Strong Candidate](file:///examples/strong_candidate_session.json)**: A senior frontend engineer handling complex questions gracefully, triggering the Decision Engine to ramp up the difficulty to Level 4/5.
+- 📉 **[Weak Candidate](file:///examples/weak_candidate_session.json)**: A junior analyst giving vague answers. The Interviewer adapts by simplifying the follow-up questions and lowering the difficulty.
+- 🧩 **[Tricky / Edge Case](file:///examples/tricky_edgecase_session.json)**: A candidate attempting to derail the technical interview with off-topic remarks. The Evaluator handles the messiness gracefully, and the Interviewer nudges them back on topic.
+
+---
+
 ## 🛡️ Deployment Readiness Checklist
 
 - [x] **Secret Keys**: `.env` is listed in `.gitignore` and has never been committed.
