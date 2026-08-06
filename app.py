@@ -330,41 +330,43 @@ hr { border-color: rgba(232,133,106,.15) !important; margin: 1.25rem 0 !importan
     margin: 1.5rem 0;
 }
 .ip-feat {
-    background: var(--grad-card);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--border-gl);
-    border-radius: 20px;
-    padding: 1.3rem 1.2rem;
-    text-align: left;
-    box-shadow: var(--shadow-sm);
-    transition: transform .25s ease, box-shadow .25s ease;
+    background: #FFFFFF;
+    border: 1px solid rgba(232, 133, 106, 0.18);
+    border-radius: 16px;
+    padding: 1.25rem 1.2rem;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 16px rgba(45, 42, 38, 0.04);
+    min-height: 135px;
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
 }
 .ip-feat:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(232, 133, 106, 0.14);
+    border-color: rgba(232, 133, 106, 0.40);
 }
 .ip-feat-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 40px; height: 40px;
-    border-radius: 12px;
-    background: var(--grad-accent);
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: #FFF5EE;
+    border: 1px solid rgba(232, 133, 106, 0.22);
+    font-size: 19px;
     margin-bottom: 10px;
 }
-.ip-feat-icon .material-icons-round { font-size: 20px; color: #fff; }
 .ip-feat h4 {
-    margin: 0 0 4px 0;
-    font-size: .92rem;
+    margin: 0 0 5px 0;
+    font-size: .95rem;
     font-weight: 700;
     color: var(--text-1);
 }
 .ip-feat p {
     margin: 0;
-    font-size: .82rem;
+    font-size: .83rem;
     color: var(--text-2);
-    line-height: 1.55;
+    line-height: 1.5;
 }
 </style>"""
 
@@ -428,6 +430,11 @@ def render_setup_screen():
                 <h4>Adaptive Difficulty</h4>
                 <p>Questions scale from beginner to expert based on your live performance.</p>
             </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            """
             <div class="ip-feat">
                 <div class="ip-feat-icon">📊</div>
                 <h4>Coaching Report</h4>
@@ -445,6 +452,11 @@ def render_setup_screen():
                 <h4>Voice or Text</h4>
                 <p>Type your answers or speak naturally — evaluated in real time.</p>
             </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            """
             <div class="ip-feat">
                 <div class="ip-feat-icon">📄</div>
                 <h4>Resume-Aware</h4>
@@ -462,6 +474,11 @@ def render_setup_screen():
                 <h4>Webcam Practice</h4>
                 <p>See yourself on camera to practice eye contact & posture.</p>
             </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            """
             <div class="ip-feat">
                 <div class="ip-feat-icon">📥</div>
                 <h4>PDF Export</h4>
