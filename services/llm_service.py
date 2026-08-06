@@ -184,6 +184,7 @@ def generate_structured(
                 llm,
                 system_prompt=system_prompt + "\nOUTPUT REQUIREMENT: Output strictly a single JSON object. No extra markdown, explanations, or commentary.",
                 user_message=formatted_user_msg,
+                max_retries=0,
             )
             parsed_dict = _extract_json(raw_text)
             normalized_dict = _normalize_dict_for_enums(parsed_dict)
@@ -206,12 +207,27 @@ def generate_text(
     llm: BaseChatModel,
     system_prompt: str,
     user_message: str,
+    max_retries: int | None = None,
 ) -> str:
-    """Call the LLM and return raw text string response (used for Markdown reports)."""
-    response = llm.invoke(
-        [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_message},
-        ]
+    """Call the LLM and return raw text string response (used for Markdown reports) with retry backoff."""
+    retries = settings.llm_max_retries if max_retries is None else max_retries
+    last_error: Exception | None = None
+
+    for attempt in range(1, retries + 2):
+        try:
+            response = llm.invoke(
+                [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_message},
+                ]
+            )
+            return str(response.content)
+        except Exception as exc:
+            last_error = exc
+            logger.warning("generate_text: attempt %d/%d failed: %s", attempt, retries + 1, exc)
+            time.sleep(attempt * 1.5)
+
+    logger.error("generate_text: giving up after %d attempts", retries + 1)
+    raise RuntimeError(
+        f"LLM failed to generate text after {retries + 1} attempts: {last_error}"
     )
-    return str(response.content)
