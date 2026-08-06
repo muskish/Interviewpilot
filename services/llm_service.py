@@ -194,7 +194,7 @@ def generate_structured(
             last_error = exc3
             logger.warning("generate_structured: Tier 3 fallback failed: %s", exc3)
 
-        time.sleep(1)
+        time.sleep(attempt * 1.5)
 
     logger.error("generate_structured: giving up after %d attempts for %s", retries + 1, output_model.__name__)
     raise RuntimeError(

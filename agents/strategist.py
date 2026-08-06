@@ -19,7 +19,7 @@ logger = get_logger(__name__)
 
 
 def create_strategy(candidate: CandidateProfile) -> InterviewStrategy:
-    """Generate a role-aware InterviewStrategy for this candidate."""
+    """Generate a role-aware InterviewStrategy for this candidate with safe fallback."""
     system_prompt = load_prompt("strategist_prompt")
 
     user_message = (
@@ -32,12 +32,23 @@ def create_strategy(candidate: CandidateProfile) -> InterviewStrategy:
 
     logger.info("Strategist: planning for role=%r focus=%r", candidate.target_role, candidate.focus_area.value)
     llm = get_llm()
-    strategy = generate_structured(
-        llm=llm,
-        system_prompt=system_prompt,
-        user_message=user_message,
-        output_model=InterviewStrategy,
-    )
+    try:
+        strategy = generate_structured(
+            llm=llm,
+            system_prompt=system_prompt,
+            user_message=user_message,
+            output_model=InterviewStrategy,
+        )
+    except Exception as exc:
+        logger.error("Strategist failed to generate strategy via LLM, using fallback: %s", exc)
+        strategy = InterviewStrategy(
+            role_summary=f"Interview plan for {candidate.target_role}",
+            competencies=[candidate.focus_area.value, "Problem Solving", "System Architecture"],
+            initial_difficulty=2,
+            topics=[candidate.target_role, candidate.focus_area.value, "System Design"],
+            evaluation_dimensions=["technical_correctness", "clarity", "reasoning"],
+        )
+
     logger.info(
         "Strategist: plan ready — %d competencies, %d topics, initial_difficulty=%d",
         len(strategy.competencies), len(strategy.topics), strategy.initial_difficulty,
