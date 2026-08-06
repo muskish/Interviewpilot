@@ -12,7 +12,7 @@ from models.evaluation import EvaluationResult
 from models.interview_plan import InterviewStrategy
 from models.interview_turn import InterviewerQuestion
 from services.llm_service import generate_structured, get_llm
-from utils.code_executor import extract_python_code, execute_python_code
+from utils.code_executor import extract_code_snippet, execute_code_snippet
 from utils.logger import get_logger
 from utils.prompt_loader import load_prompt
 
@@ -29,21 +29,23 @@ def evaluate_answer(
     """Score one answer against the strategy's evaluation_dimensions."""
     system_prompt = load_prompt("evaluator_prompt")
 
-    # Optional Sandbox Execution (Tool Use)
+    # Multi-Language Sandbox Execution & Linting (Tool Use)
     sandbox_output = ""
-    if focus_area == "technical" and answer:
-        code_block = extract_python_code(answer)
-        if code_block:
-            logger.info("Evaluator: Python code block detected. Executing sandbox...")
-            exec_result = execute_python_code(code_block)
+    if answer:
+        snippet = extract_code_snippet(answer)
+        if snippet:
+            logger.info("Evaluator: %s code block detected. Executing sandbox...", snippet.language.upper())
+            exec_result = execute_code_snippet(snippet)
+            
+            lint_str = f"Linter Feedback: {exec_result.lint_report}\n" if exec_result.lint_report else ""
             sandbox_output = (
-                "\n[Code Execution Sandbox Output]\n"
-                "The candidate provided a Python code block. I executed it in a sandbox.\n"
-                f"Execution Output (stdout): {exec_result.stdout or '(none)'}\n"
-                f"Execution Errors (stderr): {exec_result.stderr or '(none)'}\n"
+                f"\n[Code Execution Sandbox Output ({exec_result.language.upper()})]\n"
+                f"Candidate provided a {exec_result.language.upper()} code block.\n"
+                f"Stdout: {exec_result.stdout or '(none)'}\n"
+                f"Stderr: {exec_result.stderr or '(none)'}\n"
                 f"Exit Code: {exec_result.exit_code}\n"
-                f"Timed Out: {exec_result.timeout}\n"
-                "Review these actual execution results when determining your score.\n"
+                f"{lint_str}"
+                "Review these execution & linter results when determining your score.\n"
             )
 
     user_message = (

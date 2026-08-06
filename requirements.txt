@@ -33,3 +33,6 @@ gTTS==2.5.1
 
 # --- Vector DB / Embeddings (RAG) ---
 faiss-cpu==1.10.0
+
+# --- Code Quality & Linter ---
+flake8==7.1.2
