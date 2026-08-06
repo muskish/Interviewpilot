@@ -188,7 +188,7 @@ def render_interview_screen(state: InterviewState):
                 st.info("🎙️ Voice Mode Active: Click the microphone to record your answer.")
                 # We need a unique key for the audio recorder so it resets each turn
                 recorder_key = f"audio_recorder_{state.current_turn}"
-                recorded_audio = audio_recorder(text="", key=recorder_key)
+                recorded_audio = audio_recorder(text=" Click to Record / Stop", key=recorder_key, pause_threshold=60.0)
                 
                 if recorded_audio:
                     with st.spinner("Transcribing audio..."):

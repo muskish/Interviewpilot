@@ -12,6 +12,7 @@ from models.evaluation import EvaluationResult
 from models.interview_plan import InterviewStrategy
 from models.interview_turn import InterviewerQuestion
 from services.llm_service import generate_structured, get_llm
+from services.search_service import search_web
 from utils.code_executor import extract_code_snippet, execute_code_snippet
 from utils.logger import get_logger
 from utils.prompt_loader import load_prompt
@@ -48,6 +49,20 @@ def evaluate_answer(
                 "Review these execution & linter results when determining your score.\n"
             )
 
+    # Autonomous Web Search Fact-Checking (Tool Use)
+    search_context = ""
+    if answer and len(answer.split()) > 5:
+        # Search web for topic + role context to verify facts
+        search_query = f"{target_role} {question.topic} {answer[:60]}"
+        search_snippets = search_web(search_query, max_results=2)
+        if search_snippets:
+            search_context = (
+                f"\n[Live Web Search Fact-Check Context (DuckDuckGo Tool)]\n"
+                f"The Evaluator ran a live web search for '{search_query[:50]}...':\n"
+                f"{search_snippets}\n"
+                "Use these live search results to verify candidate claims.\n"
+            )
+
     user_message = (
         f"Target role: {target_role}\n"
         f"Focus area: {focus_area}\n"
@@ -57,6 +72,7 @@ def evaluate_answer(
         f"Question topic: {question.topic}\n\n"
         f"Candidate's answer: {answer or '(no answer provided)'}\n"
         f"{sandbox_output}\n"
+        f"{search_context}\n"
         "Evaluate this answer now."
     )
 

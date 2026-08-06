@@ -62,11 +62,17 @@ def generate_structured(
 
     Retries on validation/parsing failure — LLMs occasionally return output
     that doesn't match the schema. A bounded retry handles transient cases;
-    if it still fails after max_retries, we raise loudly instead of letting
-    bad data flow downstream into agent/decision-engine logic.
+    if it still fails after max_retries, we fallback to json_mode for Groq.
     """
     retries = settings.llm_max_retries if max_retries is None else max_retries
-    structured_llm = llm.with_structured_output(output_model)
+    
+    # Primary method
+    try:
+        structured_llm = llm.with_structured_output(output_model)
+    except Exception:
+        structured_llm = llm.with_structured_output(output_model, method="json_mode")
+        if "json" not in user_message.lower():
+            user_message = user_message + "\nRespond strictly with a valid json object matching the requested schema."
 
     last_error: Exception | None = None
     for attempt in range(1, retries + 2):  # +1 so "2 retries" means 3 total attempts
@@ -80,13 +86,20 @@ def generate_structured(
             if not isinstance(result, output_model):
                 result = output_model.model_validate(result)
             return result
-        except (ValidationError, ValueError, TypeError) as exc:
+        except Exception as exc:
             last_error = exc
             logger.warning(
-                "generate_structured: attempt %d/%d failed validating %s: %s",
+                "generate_structured: attempt %d/%d failed validating %s: %s. Retrying with json_mode...",
                 attempt, retries + 1, output_model.__name__, exc,
             )
-            time.sleep(min(attempt, 3))  # small, capped backoff
+            # Switch to json_mode fallback if Groq tool-calling failed
+            try:
+                structured_llm = llm.with_structured_output(output_model, method="json_mode")
+                if "json" not in user_message.lower():
+                    user_message = user_message + "\nRespond strictly with a valid json object matching the requested schema."
+            except Exception:
+                pass
+            time.sleep(min(attempt, 2))
 
     logger.error("generate_structured: giving up after %d attempts for %s", retries + 1, output_model.__name__)
     raise RuntimeError(

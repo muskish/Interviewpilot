@@ -37,3 +37,6 @@ faiss-cpu==1.10.0
 
 # --- Code Quality & Linter ---
 flake8==7.1.2
+
+# --- Web Search Tool ---
+duckduckgo-search==7.3.2
