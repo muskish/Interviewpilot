@@ -395,12 +395,16 @@ def reset_interview():
 
 def render_setup_screen():
     """Screen 1: Candidate Setup Form."""
-    # ── Hero Section ──────────────────────────────────────────────────
+    # ── Hero Logo & Heading ───────────────────────────────────────────
+    hero_col1, hero_col2, hero_col3 = st.columns([3, 1, 3])
+    with hero_col2:
+        st.image("assets/logo.png", use_container_width=True)
+
     st.markdown(
         """
         <div class="ip-hero">
             <div class="ip-hero-badge">
-                <span class="material-icons-round" style="font-size:14px;">code</span>
+                <span class="material-icons-round" style="font-size:14px;vertical-align:middle;">code</span>
                 A Project by Muskan
             </div>
             <div class="ip-hero-title">InterviewPilot</div>
@@ -410,41 +414,63 @@ def render_setup_screen():
                 and a detailed coaching report — all for free.
             </p>
         </div>
-        <div class="ip-features">
-            <div class="ip-feat">
-                <div class="ip-feat-icon"><span class="material-icons-round">psychology</span></div>
-                <h4>Adaptive Difficulty</h4>
-                <p>Questions scale from beginner to expert based on your live performance — just like a real interview.</p>
-            </div>
-            <div class="ip-feat">
-                <div class="ip-feat-icon"><span class="material-icons-round">mic</span></div>
-                <h4>Voice or Text</h4>
-                <p>Type your answers or speak naturally — the AI transcribes and evaluates either way.</p>
-            </div>
-            <div class="ip-feat">
-                <div class="ip-feat-icon"><span class="material-icons-round">videocam</span></div>
-                <h4>Webcam Practice</h4>
-                <p>See yourself on camera to practice eye contact, posture, and facial expressions.</p>
-            </div>
-            <div class="ip-feat">
-                <div class="ip-feat-icon"><span class="material-icons-round">assessment</span></div>
-                <h4>Coaching Report</h4>
-                <p>Get a multi-dimensional skill breakdown, performance trajectory, and actionable improvement tips.</p>
-            </div>
-            <div class="ip-feat">
-                <div class="ip-feat-icon"><span class="material-icons-round">description</span></div>
-                <h4>Resume-Aware</h4>
-                <p>Upload your resume and the AI tailors questions to your actual experience and skills.</p>
-            </div>
-            <div class="ip-feat">
-                <div class="ip-feat-icon"><span class="material-icons-round">picture_as_pdf</span></div>
-                <h4>PDF Export</h4>
-                <p>Download your full coaching report as a professional PDF to share with mentors or revisit later.</p>
-            </div>
-        </div>
         """,
         unsafe_allow_html=True,
     )
+
+    # ── Feature Cards Grid ─────────────────────────────────────────────
+    fc1, fc2, fc3 = st.columns(3)
+    with fc1:
+        st.markdown(
+            """
+            <div class="ip-feat">
+                <div class="ip-feat-icon">🎯</div>
+                <h4>Adaptive Difficulty</h4>
+                <p>Questions scale from beginner to expert based on your live performance.</p>
+            </div>
+            <div class="ip-feat">
+                <div class="ip-feat-icon">📊</div>
+                <h4>Coaching Report</h4>
+                <p>Get a multi-dimensional skill breakdown & actionable improvement tips.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with fc2:
+        st.markdown(
+            """
+            <div class="ip-feat">
+                <div class="ip-feat-icon">🎙️</div>
+                <h4>Voice or Text</h4>
+                <p>Type your answers or speak naturally — evaluated in real time.</p>
+            </div>
+            <div class="ip-feat">
+                <div class="ip-feat-icon">📄</div>
+                <h4>Resume-Aware</h4>
+                <p>Upload your resume to tailor questions to your actual background.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with fc3:
+        st.markdown(
+            """
+            <div class="ip-feat">
+                <div class="ip-feat-icon">📷</div>
+                <h4>Webcam Practice</h4>
+                <p>See yourself on camera to practice eye contact & posture.</p>
+            </div>
+            <div class="ip-feat">
+                <div class="ip-feat-icon">📥</div>
+                <h4>PDF Export</h4>
+                <p>Download your full coaching report as a professional PDF document.</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
     st.markdown("---")
 
     with st.form("setup_form"):
@@ -752,7 +778,7 @@ def main():
     """Application main router."""
     st.set_page_config(
         page_title="InterviewPilot",
-        page_icon="🎯",
+        page_icon="assets/logo.png",
         layout="wide",
     )
     init_session_state()
