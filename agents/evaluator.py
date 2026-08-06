@@ -21,7 +21,7 @@ from models.evaluation import (
 )
 from models.interview_plan import InterviewStrategy
 from models.interview_turn import InterviewerQuestion
-from services.code_executor import execute_code_snippet
+from utils.code_executor import extract_code_snippet, execute_code_snippet
 from services.llm_service import generate_structured, get_llm
 from services.search_service import search_web
 from utils.logger import get_logger
@@ -42,16 +42,17 @@ def evaluate_answer(
 
     # Multi-Language Code Sandbox Execution
     sandbox_output = ""
-    if answer and any(kw in answer.lower() for kw in ["def ", "function ", "class ", "import ", "select ", "const ", "let ", "var "]):
-        exec_res = execute_code_snippet(answer)
-        if exec_res["status"] != "no_code_detected":
-            sandbox_output = (
-                f"\n[Multi-Language Code Sandbox Execution ({exec_res['language']})]\n"
-                f"Status: {exec_res['status']}\n"
-                f"Stdout: {exec_res['stdout']}\n"
-                f"Stderr: {exec_res['stderr']}\n"
-                f"Linter Output: {exec_res.get('linter_output', 'clean')}\n"
-            )
+    if answer:
+        snippet = extract_code_snippet(answer)
+        if snippet:
+            exec_res = execute_code_snippet(snippet)
+            if exec_res.executed:
+                sandbox_output = (
+                    f"\n[Multi-Language Code Sandbox Execution ({exec_res.language})]\n"
+                    f"Stdout: {exec_res.stdout}\n"
+                    f"Stderr: {exec_res.stderr}\n"
+                    f"Linter Output: {exec_res.lint_report or 'clean'}\n"
+                )
 
     # Autonomous Web Search Fact-Checking (Tool Use)
     search_context = ""
