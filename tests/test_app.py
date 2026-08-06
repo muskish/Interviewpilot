@@ -37,9 +37,9 @@ def test_reset_interview(mock_rerun: MagicMock):
 @patch("streamlit.bar_chart")
 @patch("streamlit.line_chart")
 @patch("streamlit.metric")
-@patch("streamlit.subheader")
+@patch("streamlit.markdown")
 def test_render_analytics_dashboard_with_data(
-    mock_subheader: MagicMock,
+    mock_markdown: MagicMock,
     mock_metric: MagicMock,
     mock_line_chart: MagicMock,
     mock_bar_chart: MagicMock,
@@ -69,7 +69,7 @@ def test_render_analytics_dashboard_with_data(
 
     render_analytics_dashboard(state)
 
-    mock_subheader.assert_called_once()
+    assert mock_markdown.call_count >= 1
     assert mock_metric.call_count == 3
     mock_line_chart.assert_called_once()
     mock_bar_chart.assert_called_once()

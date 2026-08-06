@@ -34,6 +34,7 @@ SpeechRecognition==3.14.0
 
 # --- Vector DB / Embeddings (RAG) ---
 faiss-cpu==1.10.0
+scikit-learn==1.6.1
 
 # --- Code Quality & Linter ---
 flake8==7.1.2
