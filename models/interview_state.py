@@ -43,5 +43,6 @@ class InterviewState(BaseModel):
     next_action: RecommendedAction | None = None
     current_question: InterviewerQuestion | None = None
 
+    enable_webcam: bool = False
     status: InterviewStatus = InterviewStatus.NOT_STARTED
     final_report: str | None = None

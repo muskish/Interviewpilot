@@ -71,6 +71,12 @@ def render_setup_screen():
             help="Provide the real job description to ground the interview competencies in actual requirements.",
         )
 
+        enable_webcam = st.checkbox(
+            "📷 Enable Live Webcam Practice Mode",
+            value=False,
+            help="Show your live camera feed during the interview to practice posture and eye contact.",
+        )
+
         submitted = st.form_submit_button("🚀 Start Interview", use_container_width=True)
 
     if submitted:
@@ -96,6 +102,7 @@ def render_setup_screen():
 
         with st.spinner("Generating role-aware interview strategy and first question..."):
             state = run_start_interview(candidate)
+            state.enable_webcam = enable_webcam
             st.session_state["interview_state"] = state
             st.rerun()
 
@@ -138,25 +145,42 @@ def render_interview_screen(state: InterviewState):
 
     st.markdown("---")
 
-    # Past Q&A chat history
-    for turn in state.transcript:
-        with st.chat_message("assistant"):
-            st.write(turn.question.question)
-        with st.chat_message("user"):
-            st.write(turn.answer)
+    # Layout: Split into Chat Column and Camera Column if webcam enabled
+    if state.enable_webcam:
+        col_chat, col_cam = st.columns([3, 2])
+    else:
+        col_chat = st.container()
+        col_cam = None
 
-    # Current active question
-    if state.current_question:
-        with st.chat_message("assistant"):
-            st.write(state.current_question.question)
+    with col_chat:
+        # Past Q&A chat history
+        for turn in state.transcript:
+            with st.chat_message("assistant"):
+                st.write(turn.question.question)
+            with st.chat_message("user"):
+                st.write(turn.answer)
 
-        # Candidate answer chat input
-        user_answer = st.chat_input("Type your answer here...")
-        if user_answer and user_answer.strip():
-            with st.spinner("Evaluating response & updating interview strategy..."):
-                updated_state = run_answer_turn(state, user_answer.strip())
-                st.session_state["interview_state"] = updated_state
-                st.rerun()
+        # Current active question
+        if state.current_question:
+            with st.chat_message("assistant"):
+                st.write(state.current_question.question)
+
+            # Candidate answer chat input
+            user_answer = st.chat_input("Type your answer here...")
+            if user_answer and user_answer.strip():
+                with st.spinner("Evaluating response & updating interview strategy..."):
+                    updated_state = run_answer_turn(state, user_answer.strip())
+                    updated_state.enable_webcam = state.enable_webcam
+                    st.session_state["interview_state"] = updated_state
+                    st.rerun()
+
+    if col_cam:
+        with col_cam:
+            st.markdown("##### 📷 Live Camera Feed")
+            st.caption("Practice eye contact and facial expressions while answering.")
+            picture = st.camera_input("Practice Feed")
+            if picture:
+                st.success("✅ Posture & Eye Contact Snapshot Captured!")
 
 
 def render_analytics_dashboard(state: InterviewState):
