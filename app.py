@@ -320,8 +320,28 @@ hr { border-color: rgba(232,133,106,.15) !important; margin: 1.25rem 0 !importan
     font-size: .78rem;
     font-weight: 600;
     color: var(--accent);
-    margin-bottom: 1rem;
+    margin-bottom: .5rem;
     letter-spacing: .3px;
+}
+.ip-hero-left {
+    padding: 0.2rem 0;
+}
+.ip-hero-title-left {
+    font-size: 2.6rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    background: var(--grad-accent);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0.2rem 0 0.5rem 0;
+    line-height: 1.15;
+}
+.ip-hero-sub-left {
+    font-size: 1.05rem;
+    color: var(--text-2);
+    margin: 0;
+    line-height: 1.6;
 }
 .ip-features {
     display: grid;
@@ -397,28 +417,30 @@ def reset_interview():
 
 def render_setup_screen():
     """Screen 1: Candidate Setup Form."""
-    # ── Hero Logo & Heading ───────────────────────────────────────────
-    hero_col1, hero_col2, hero_col3 = st.columns([3, 1, 3])
-    with hero_col2:
+    # ── Hero Logo (Left) & Heading (Right) ──────────────────────────────────
+    c_logo, c_head = st.columns([1, 5])
+    with c_logo:
         st.image("assets/logo.png", use_container_width=True)
-
-    st.markdown(
-        """
-        <div class="ip-hero">
-            <div class="ip-hero-badge">
-                <span class="material-icons-round" style="font-size:14px;vertical-align:middle;">code</span>
-                A Project by Muskan
+    with c_head:
+        st.markdown(
+            """
+            <div class="ip-hero-left">
+                <div class="ip-hero-badge">
+                    <span class="material-icons-round" style="font-size:14px;vertical-align:middle;">code</span>
+                    A Project by Muskan
+                </div>
+                <h1 class="ip-hero-title-left">InterviewPilot</h1>
+                <p class="ip-hero-sub-left">
+                    Your AI-powered mock interview coach that adapts in real time.
+                    Practice for any role with dynamic questions, instant feedback,
+                    and a detailed coaching report.
+                </p>
             </div>
-            <div class="ip-hero-title">InterviewPilot</div>
-            <p class="ip-hero-sub">
-                Your AI-powered mock interview coach that adapts in real time.
-                Practice for any role with dynamic questions, instant feedback,
-                and a detailed coaching report — all for free.
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("---")
 
     # ── Feature Cards Grid ─────────────────────────────────────────────
     fc1, fc2, fc3 = st.columns(3)
