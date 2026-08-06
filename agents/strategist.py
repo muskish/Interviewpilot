@@ -25,7 +25,8 @@ def create_strategy(candidate: CandidateProfile) -> InterviewStrategy:
     user_message = (
         f"Target role: {candidate.target_role}\n"
         f"Focus area: {candidate.focus_area.value}\n"
-        f"Candidate background: {candidate.background or '(not provided)'}\n\n"
+        f"Candidate background: {candidate.background or '(not provided)'}\n"
+        f"Job Description: {candidate.job_description or '(not provided)'}\n\n"
         "Create the interview strategy for this candidate."
     )
 

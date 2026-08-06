@@ -92,3 +92,18 @@ def generate_structured(
     raise RuntimeError(
         f"LLM failed to return valid {output_model.__name__} after {retries + 1} attempts: {last_error}"
     )
+
+
+def generate_text(
+    llm: BaseChatModel,
+    system_prompt: str,
+    user_message: str,
+) -> str:
+    """Call the LLM and return raw text string response (used for Markdown reports)."""
+    response = llm.invoke(
+        [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_message},
+        ]
+    )
+    return str(response.content)

@@ -19,4 +19,7 @@ class CandidateProfile(BaseModel):
     background: str | None = Field(
         default=None, description="Optional 2-3 line background/resume snippet."
     )
+    job_description: str | None = Field(
+        default=None, description="Optional job description text for grounding the interview strategy."
+    )
     focus_area: FocusArea

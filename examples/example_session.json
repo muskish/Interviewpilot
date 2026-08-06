@@ -1,0 +1,89 @@
+{
+  "session_id": "ex-1234-5678",
+  "candidate": {
+    "target_role": "Software Engineer",
+    "background": "3 years of Python and React experience.",
+    "focus_area": "technical"
+  },
+  "strategy": {
+    "role_summary": "Mid-level SWE focusing on fullstack development",
+    "competencies": [
+      "Python",
+      "System Design",
+      "Algorithms"
+    ],
+    "initial_difficulty": 3,
+    "topics": [
+      "Data Structures",
+      "API Design"
+    ],
+    "evaluation_dimensions": [
+      "correctness",
+      "communication"
+    ]
+  },
+  "transcript": [
+    {
+      "turn_number": 1,
+      "question": {
+        "question": "Can you explain the difference between a list and a tuple in Python?",
+        "question_type": "opening",
+        "topic": "Data Structures",
+        "difficulty": 2
+      },
+      "answer": "Lists are mutable while tuples are immutable.",
+      "evaluation": {
+        "dimension_scores": {
+          "correctness": 5.0,
+          "communication": 4.0
+        },
+        "overall_score": 4.5,
+        "overall_level": "strong",
+        "strengths": [
+          "Clear explanation of mutability"
+        ],
+        "weaknesses": [],
+        "answer_status": "strong",
+        "recommended_action": "move_on",
+        "follow_up_focus": "",
+        "difficulty_adjustment": "increase"
+      }
+    },
+    {
+      "turn_number": 2,
+      "question": {
+        "question": "How would you design a rate limiter for an API?",
+        "question_type": "new_topic",
+        "topic": "API Design",
+        "difficulty": 4
+      },
+      "answer": "I would use a token bucket algorithm.",
+      "evaluation": {
+        "dimension_scores": {
+          "correctness": 3.0,
+          "communication": 4.0
+        },
+        "overall_score": 3.5,
+        "overall_level": "ok",
+        "strengths": [
+          "Mentioned token bucket"
+        ],
+        "weaknesses": [
+          "Missed distributed systems aspect"
+        ],
+        "answer_status": "adequate",
+        "recommended_action": "probe_deeper",
+        "follow_up_focus": "Distributed rate limiting with Redis",
+        "difficulty_adjustment": "maintain"
+      }
+    }
+  ],
+  "current_turn": 2,
+  "max_turns": 2,
+  "current_topic": "API Design",
+  "current_difficulty": 4,
+  "next_action": null,
+  "current_question": null,
+  "status": "completed",
+  "final_report": "# Final Interview Report\n\nThe candidate performed well on basic Python questions but needs deeper knowledge of distributed systems."
+}

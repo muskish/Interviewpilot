@@ -1,0 +1,180 @@
+{
+  "session_id": "ex-strong-candidate",
+  "candidate": {
+    "target_role": "Senior Data Engineer",
+    "background": "5 years experience with PySpark, Apache Kafka, and Snowflake building real-time data pipelines.",
+    "focus_area": "technical"
+  },
+  "strategy": {
+    "role_summary": "Senior Data Engineering role focusing on distributed systems and streaming architectures.",
+    "competencies": [
+      "PySpark",
+      "Distributed Systems",
+      "Kafka",
+      "Data Modeling"
+    ],
+    "initial_difficulty": 2,
+    "topics": [
+      "Distributed Data Processing",
+      "Streaming Architectures",
+      "Database Optimization"
+    ],
+    "evaluation_dimensions": [
+      "technical_correctness",
+      "architecture_depth",
+      "communication"
+    ]
+  },
+  "transcript": [
+    {
+      "turn_number": 1,
+      "question": {
+        "question": "How does PySpark handle data partitioning across worker nodes, and how do you prevent data skew?",
+        "question_type": "opening",
+        "topic": "Distributed Data Processing",
+        "difficulty": 2
+      },
+      "answer": "PySpark partitions data across nodes based on hash partitioning or explicit repartitioning. Data skew happens when one key has significantly more data. I mitigate this by salting the keys—adding a random prefix to distribute the heavy key across multiple partitions before aggregating.",
+      "evaluation": {
+        "dimension_scores": {
+          "technical_correctness": 5.0,
+          "architecture_depth": 4.5,
+          "communication": 5.0
+        },
+        "overall_score": 4.8,
+        "overall_level": "strong",
+        "strengths": [
+          "Clear explanation of hash partitioning",
+          "Mentioned salting keys for skew mitigation"
+        ],
+        "weaknesses": [],
+        "answer_status": "strong",
+        "recommended_action": "move_on",
+        "follow_up_focus": "",
+        "difficulty_adjustment": "increase"
+      }
+    },
+    {
+      "turn_number": 2,
+      "question": {
+        "question": "How do consumer groups in Apache Kafka guarantee ordering within a partition, and what happens during a rebalance?",
+        "question_type": "new_topic",
+        "topic": "Streaming Architectures",
+        "difficulty": 3
+      },
+      "answer": "Kafka guarantees strict ordering within a single partition because only one consumer in a group consumes from a given partition at a time. During a rebalance, partition ownership is reassigned. Modern Kafka uses Cooperative Sticky Assignors to prevent stop-the-world pauses by only revoking partitions that move between consumers.",
+      "evaluation": {
+        "dimension_scores": {
+          "technical_correctness": 5.0,
+          "architecture_depth": 4.8,
+          "communication": 4.8
+        },
+        "overall_score": 4.9,
+        "overall_level": "strong",
+        "strengths": [
+          "Accurate Kafka protocol details",
+          "Explained eager vs cooperative sticky rebalancing"
+        ],
+        "weaknesses": [],
+        "answer_status": "strong",
+        "recommended_action": "move_on",
+        "follow_up_focus": "",
+        "difficulty_adjustment": "increase"
+      }
+    },
+    {
+      "turn_number": 3,
+      "question": {
+        "question": "In Snowflake, how do micro-partitions work under the hood, and when would you manually define a Clustering Key?",
+        "question_type": "new_topic",
+        "topic": "Database Optimization",
+        "difficulty": 4
+      },
+      "answer": "Snowflake stores data in immutable 50-500MB micro-partitions containing columnar data and metadata (min/max values per column). I manually define a clustering key when tables reach multi-terabyte scale and queries frequently filter on specific high-cardinality columns, enabling partition pruning.",
+      "evaluation": {
+        "dimension_scores": {
+          "technical_correctness": 4.8,
+          "architecture_depth": 4.6,
+          "communication": 4.7
+        },
+        "overall_score": 4.7,
+        "overall_level": "strong",
+        "strengths": [
+          "Understands immutable micro-partitions",
+          "Good practical threshold for clustering keys"
+        ],
+        "weaknesses": [],
+        "answer_status": "strong",
+        "recommended_action": "move_on",
+        "follow_up_focus": "",
+        "difficulty_adjustment": "increase"
+      }
+    },
+    {
+      "turn_number": 4,
+      "question": {
+        "question": "How would you design an end-to-end pipeline to guarantee exactly-once processing from Kafka to Snowflake?",
+        "question_type": "follow_up",
+        "topic": "Streaming Architectures",
+        "difficulty": 5
+      },
+      "answer": "I would combine transactional Kafka producers with an idempotent consumer/sink. Using Snowflake Kafka Connector with Snowpipe Streaming, we write messages along with Kafka offsets to staging tables. Deduplication is enforced downstream via MERGE statements or unique key constraints during target loading.",
+      "evaluation": {
+        "dimension_scores": {
+          "technical_correctness": 4.7,
+          "architecture_depth": 4.5,
+          "communication": 4.6
+        },
+        "overall_score": 4.6,
+        "overall_level": "strong",
+        "strengths": [
+          "Idempotent write mechanism",
+          "Two-phase commit and deduplication strategy"
+        ],
+        "weaknesses": [
+          "Slightly brief on transactional offsets"
+        ],
+        "answer_status": "strong",
+        "recommended_action": "move_on",
+        "follow_up_focus": "",
+        "difficulty_adjustment": "maintain"
+      }
+    },
+    {
+      "turn_number": 5,
+      "question": {
+        "question": "When dealing with schema evolution in streaming pipelines, how do you handle breaking schema changes without pipeline downtime?",
+        "question_type": "follow_up",
+        "topic": "Streaming Architectures",
+        "difficulty": 5
+      },
+      "answer": "I enforce a Schema Registry (like Confluent Schema Registry) using Avro or Protobuf. For breaking changes, I mandate BACKWARD or FULL compatibility rules. Consumers are upgraded to support optional fields before producers introduce them, or we spin up a parallel topic version (v2) for non-breaking deprecation.",
+      "evaluation": {
+        "dimension_scores": {
+          "technical_correctness": 4.9,
+          "architecture_depth": 4.8,
+          "communication": 4.8
+        },
+        "overall_score": 4.8,
+        "overall_level": "strong",
+        "strengths": [
+          "Schema Registry enforcement",
+          "Backward compatibility strategies"
+        ],
+        "weaknesses": [],
+        "answer_status": "strong",
+        "recommended_action": "move_on",
+        "follow_up_focus": "",
+        "difficulty_adjustment": "maintain"
+      }
+    }
+  ],
+  "current_turn": 5,
+  "max_turns": 5,
+  "current_topic": "Streaming Architectures",
+  "current_difficulty": 5,
+  "next_action": null,
+  "current_question": null,
+  "status": "completed",
+  "final_report": "# Final Coaching Report — Strong Candidate\n\n## Overall Rating: 4.8 / 5.0 (Senior Level Exceeded)\n\n### Strengths\n- **Deep Distributed Systems Expertise**: Demonstrated thorough knowledge of Spark partitioning, Kafka consumer mechanics, and Snowflake micro-partitioning.\n- **Architectural Pragmatism**: Applied production-tested patterns like key salting, cooperative rebalancing, and schema registry compatibility.\n- **Clear Communication**: Communicated complex technical concepts concisely and structured responses logically.\n\n### Areas for Enhancement\n- Dive deeper into lower-level transactional offset mechanics in Kafka for complete fault-tolerance proofs.\n\n### Next Steps & Recommendations\n- Ready for Staff / Lead System Architect interview tracks."
+}

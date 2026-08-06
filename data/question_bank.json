@@ -1,0 +1,65 @@
+[
+  {
+    "id": "tech_py_01",
+    "topic": "Python",
+    "focus_area": "technical",
+    "difficulty": 2,
+    "seed_question": "Explain the difference between lists and tuples in Python, and when you would use one over the other.",
+    "rubric": "Evaluates understanding of mutability, memory overhead, hashability (dict keys), and data integrity.",
+    "key_concepts": ["mutability", "hashability", "performance", "memory"]
+  },
+  {
+    "id": "tech_py_02",
+    "topic": "Python",
+    "focus_area": "technical",
+    "difficulty": 4,
+    "seed_question": "How do Python decorators work under the hood, and how would you implement a rate-limiting decorator?",
+    "rubric": "Evaluates knowledge of first-class functions, closures, functools.wraps, and state management in decorators.",
+    "key_concepts": ["first-class functions", "closures", "wraps", "higher-order functions"]
+  },
+  {
+    "id": "tech_react_01",
+    "topic": "React",
+    "focus_area": "technical",
+    "difficulty": 3,
+    "seed_question": "Explain how useEffect cleanup functions work and how you prevent memory leaks when subscribing to external APIs.",
+    "rubric": "Evaluates understanding of component lifecycle, effect dependencies, teardown logic, and memory leak prevention.",
+    "key_concepts": ["useEffect", "teardown", "dependency array", "closures"]
+  },
+  {
+    "id": "tech_sys_01",
+    "topic": "System Design",
+    "focus_area": "technical",
+    "difficulty": 4,
+    "seed_question": "How would you design a rate limiter service for a high-throughput API gateway? Compare Token Bucket vs Sliding Window Log.",
+    "rubric": "Evaluates capacity estimation, algorithmic tradeoffs (memory vs accuracy), Redis implementation, and concurrency handling.",
+    "key_concepts": ["token bucket", "sliding window", "redis", "concurrency", "distributed systems"]
+  },
+  {
+    "id": "beh_star_01",
+    "topic": "Conflict Resolution",
+    "focus_area": "behavioral",
+    "difficulty": 2,
+    "seed_question": "Describe a situation where you had a technical disagreement with a teammate. How did you handle it and what was the outcome?",
+    "rubric": "Evaluates STAR format, empathy, data-driven negotiation, compromise, and professional maturity.",
+    "key_concepts": ["STAR method", "collaboration", "active listening", "tradeoffs"]
+  },
+  {
+    "id": "beh_star_02",
+    "topic": "Ownership & Failure",
+    "focus_area": "behavioral",
+    "difficulty": 3,
+    "seed_question": "Tell me about a time a project or feature you led failed or met unexpected obstacles. What went wrong and what did you learn?",
+    "rubric": "Evaluates self-awareness, accountability (avoiding pointing fingers), post-mortem analysis, and growth mindset.",
+    "key_concepts": ["accountability", "reflection", "post-mortem", "learning"]
+  },
+  {
+    "id": "case_product_01",
+    "topic": "Product Execution",
+    "focus_area": "case",
+    "difficulty": 3,
+    "seed_question": "If daily active users (DAU) for our mobile app suddenly dropped by 15% over the weekend, how would you systematically diagnose the issue?",
+    "rubric": "Evaluates structured problem solving, metric breakdown, funnel analysis, segmentation (OS, region), and root cause analysis.",
+    "key_concepts": ["funnel analysis", "segmentation", "metric decomposition", "hypothesis testing"]
+  }
+]

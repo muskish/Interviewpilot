@@ -1,0 +1,174 @@
+{
+  "session_id": "ex-tricky-edgecase",
+  "candidate": {
+    "target_role": "Frontend Engineer",
+    "background": "Self-taught developer testing system boundaries.",
+    "focus_area": "technical"
+  },
+  "strategy": {
+    "role_summary": "Frontend Developer role testing state management and JS performance.",
+    "competencies": [
+      "JavaScript",
+      "React",
+      "CSS Layouts"
+    ],
+    "initial_difficulty": 2,
+    "topics": [
+      "React Fundamentals",
+      "Asynchronous JS",
+      "CSS Architecture"
+    ],
+    "evaluation_dimensions": [
+      "technical_correctness",
+      "resilience",
+      "communication"
+    ]
+  },
+  "transcript": [
+    {
+      "turn_number": 1,
+      "question": {
+        "question": "Can you explain how React's Fiber reconciler differs from the legacy stack reconciler?",
+        "question_type": "opening",
+        "topic": "React Fundamentals",
+        "difficulty": 2
+      },
+      "answer": "I don't know.",
+      "evaluation": {
+        "dimension_scores": {
+          "technical_correctness": 1.0,
+          "resilience": 1.0,
+          "communication": 1.0
+        },
+        "overall_score": 1.0,
+        "overall_level": "no_answer",
+        "strengths": [],
+        "weaknesses": [
+          "Admitted lack of knowledge on React Fiber internals"
+        ],
+        "answer_status": "no_answer",
+        "recommended_action": "simplify",
+        "follow_up_focus": "Basic array manipulation and DOM operations",
+        "difficulty_adjustment": "decrease"
+      }
+    },
+    {
+      "turn_number": 2,
+      "question": {
+        "question": "No problem! Let's simplify. How does `Array.prototype.map()` differ from `Array.prototype.forEach()` in JavaScript?",
+        "question_type": "simplified",
+        "topic": "JavaScript Basics",
+        "difficulty": 1
+      },
+      "answer": "map returns a new array, foreach doesn't.",
+      "evaluation": {
+        "dimension_scores": {
+          "technical_correctness": 3.5,
+          "resilience": 3.0,
+          "communication": 2.5
+        },
+        "overall_score": 3.0,
+        "overall_level": "adequate",
+        "strengths": [
+          "Factually correct on return value"
+        ],
+        "weaknesses": [
+          "Very terse reply lacking elaboration"
+        ],
+        "answer_status": "adequate",
+        "recommended_action": "probe_deeper",
+        "follow_up_focus": "Immutability and side effects",
+        "difficulty_adjustment": "maintain"
+      }
+    },
+    {
+      "turn_number": 3,
+      "question": {
+        "question": "Great. Why is returning a new array in `.map()` preferred for state updates in libraries like React?",
+        "question_type": "follow_up",
+        "topic": "React Fundamentals",
+        "difficulty": 1
+      },
+      "answer": "Honestly I prefer Vue. React has too much boilerplate and setState is annoying.",
+      "evaluation": {
+        "dimension_scores": {
+          "technical_correctness": 2.0,
+          "resilience": 2.0,
+          "communication": 1.5
+        },
+        "overall_score": 1.8,
+        "overall_level": "off_topic",
+        "strengths": [],
+        "weaknesses": [
+          "Deflective and off-topic pushback against technology stack"
+        ],
+        "answer_status": "off_topic",
+        "recommended_action": "redirect",
+        "follow_up_focus": "Asynchronous operations in plain JS",
+        "difficulty_adjustment": "maintain"
+      }
+    },
+    {
+      "turn_number": 4,
+      "question": {
+        "question": "Frameworks aside, let's look at core JavaScript: how do Promises and async/await handle event loop microtasks?",
+        "question_type": "new_topic",
+        "topic": "Asynchronous JS",
+        "difficulty": 1
+      },
+      "answer": "Promises schedule callbacks onto the Microtask queue, which is emptied completely after the current task finishes and before the Event Loop moves to the next Macrotask queue item (like setTimeout). Async/await is syntactic sugar on top of Promises.",
+      "evaluation": {
+        "dimension_scores": {
+          "technical_correctness": 4.5,
+          "resilience": 4.5,
+          "communication": 4.0
+        },
+        "overall_score": 4.3,
+        "overall_level": "strong",
+        "strengths": [
+          "Accurate microtask queue vs macrotask queue explanation"
+        ],
+        "weaknesses": [],
+        "answer_status": "strong",
+        "recommended_action": "move_on",
+        "follow_up_focus": "",
+        "difficulty_adjustment": "increase"
+      }
+    },
+    {
+      "turn_number": 5,
+      "question": {
+        "question": "Excellent recovery. Finally, what are the primary differences between CSS Flexbox and CSS Grid?",
+        "question_type": "new_topic",
+        "topic": "CSS Architecture",
+        "difficulty": 2
+      },
+      "answer": "Flexbox is primarily 1-dimensional (rows OR columns), perfect for component-level alignment. CSS Grid is 2-dimensional (rows AND columns together), designed for page-level layouts.",
+      "evaluation": {
+        "dimension_scores": {
+          "technical_correctness": 4.6,
+          "resilience": 4.5,
+          "communication": 4.5
+        },
+        "overall_score": 4.5,
+        "overall_level": "strong",
+        "strengths": [
+          "Clear 1D vs 2D layout distinction"
+        ],
+        "weaknesses": [],
+        "answer_status": "strong",
+        "recommended_action": "move_on",
+        "follow_up_focus": "",
+        "difficulty_adjustment": "maintain"
+      }
+    }
+  ],
+  "current_turn": 5,
+  "max_turns": 5,
+  "current_topic": "CSS Architecture",
+  "current_difficulty": 2,
+  "next_action": null,
+  "current_question": null,
+  "status": "completed",
+  "final_report": "# Final Coaching Report — Edge Case Candidate\n\n## Overall Rating: 2.9 / 5.0 (Variable / Recovered)\n\n### Strengths\n- **Strong Core JavaScript & CSS Knowledge**: When engaged, displayed deep understanding of event loop microtasks and CSS Grid vs Flexbox.\n- **Resilience under Redirection**: Recovered strongly after initial rough turns.\n\n### Growth Areas & Edge Case Behavior\n- **Interview Etiquette**: Initial deflection ('I don't know', pushing back on React) lowers interviewer confidence.\n- **Initial Engagement**: Avoid single-sentence answers when explaining foundational concepts.\n\n### Advice\n- Maintain professional composure even when asked about unfamiliar frameworks or internal mechanics."
+}
