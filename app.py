@@ -17,6 +17,172 @@ from orchestration.graph import run_answer_turn, run_start_interview
 from services.session_service import save_session
 
 
+# --- Google Material Icons via CDN ---
+MATERIAL_ICONS_CSS = """
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+"""
+
+GLOBAL_CSS = """
+<style>
+/* --- Global Font & Theme --- */
+html, body, [class*="css"] {
+    font-family: 'Inter', sans-serif !important;
+}
+
+/* --- Warm Accent Colors --- */
+:root {
+    --accent: #E06C3C;
+    --accent-light: #F2A07B;
+    --bg-warm: #FDF8F4;
+    --bg-card: #FFFFFF;
+    --border-warm: #EDE0D4;
+    --text-primary: #2D2A26;
+    --text-secondary: #6B6560;
+}
+
+/* --- Card Containers --- */
+.ip-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-warm);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 12px rgba(45, 42, 38, 0.04);
+}
+
+/* --- Stat Pill --- */
+.ip-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-warm);
+    border: 1px solid var(--border-warm);
+    border-radius: 24px;
+    padding: 6px 16px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+.ip-stat .material-icons-round {
+    font-size: 16px;
+    color: var(--accent);
+}
+
+/* --- Icon Helper --- */
+.mi { vertical-align: middle; font-size: 18px !important; color: var(--accent); margin-right: 4px; }
+.mi-lg { vertical-align: middle; font-size: 22px !important; color: var(--accent); margin-right: 6px; }
+
+/* --- Header Bar --- */
+.ip-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+}
+.ip-header h1 {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+/* --- Question Bubble --- */
+.ip-question-bubble {
+    background: linear-gradient(135deg, #FFF5EE 0%, #FDF0E8 100%);
+    border-left: 4px solid var(--accent);
+    border-radius: 0 16px 16px 0;
+    padding: 1.2rem 1.5rem;
+    margin: 0.8rem 0;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--text-primary);
+}
+
+/* --- Transcript History Entry --- */
+.ip-history-q {
+    background: #FFF9F5;
+    border-left: 3px solid var(--accent-light);
+    border-radius: 0 12px 12px 0;
+    padding: 0.8rem 1.2rem;
+    margin: 0.4rem 0;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+.ip-history-a {
+    background: #F0F7F0;
+    border-left: 3px solid #7CB97C;
+    border-radius: 0 12px 12px 0;
+    padding: 0.8rem 1.2rem;
+    margin: 0.4rem 0 0.8rem 0;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+/* --- Voice Info Banner --- */
+.ip-voice-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #FFF5EE;
+    border: 1px solid var(--border-warm);
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    margin: 8px 0;
+}
+.ip-voice-banner .material-icons-round {
+    color: var(--accent);
+    font-size: 20px;
+}
+
+/* --- Camera container styling --- */
+.ip-camera-wrap {
+    border-radius: 20px;
+    overflow: hidden;
+    border: 2px solid var(--border-warm);
+    box-shadow: 0 4px 24px rgba(45, 42, 38, 0.08);
+}
+
+/* Hide camera Take Photo button */
+[data-testid="stCameraInput"] button {
+    display: none !important;
+}
+[data-testid="stCameraInput"] {
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+/* --- Progress bar warm color --- */
+.stProgress > div > div {
+    background-color: var(--accent) !important;
+}
+
+/* --- Button warm accent --- */
+.stButton > button {
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    transition: all 0.2s ease !important;
+}
+.stButton > button:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(224, 108, 60, 0.25) !important;
+}
+</style>
+"""
+
+
+def icon(name: str, size: str = "") -> str:
+    """Return an inline Material Icon span."""
+    cls = f"material-icons-round mi {size}"
+    return f'<span class="{cls}">{name}</span>'
+
+
+def icon_lg(name: str) -> str:
+    return icon(name, "mi-lg")
+
+
 # --- Streamlit Session State & Helper Functions ---
 
 def init_session_state():
@@ -33,9 +199,19 @@ def reset_interview():
 
 def render_setup_screen():
     """Screen 1: Candidate Setup Form."""
-    st.title("🎯 InterviewPilot")
-    st.subheader("Adaptive AI Mock Interview Coach")
-    st.markdown("Prepare for target roles with real-time, adaptive AI interviewing and structured coaching feedback.")
+    st.markdown(MATERIAL_ICONS_CSS, unsafe_allow_html=True)
+    st.markdown(GLOBAL_CSS, unsafe_allow_html=True)
+
+    st.markdown(
+        f"""
+        <div class="ip-header">
+            <span class="material-icons-round" style="font-size:36px; color:#E06C3C;">target</span>
+            <h1>InterviewPilot</h1>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.caption("Adaptive AI Mock Interview Coach — powered by LangGraph Agentic Workflows")
     st.markdown("---")
 
     with st.form("setup_form"):
@@ -48,7 +224,7 @@ def render_setup_screen():
         focus_area = st.selectbox(
             "Focus Area *",
             options=[fa.value for fa in FocusArea],
-            index=1,  # Default to Technical
+            index=1,
             help="Select the category of interview questions.",
         )
 
@@ -72,18 +248,18 @@ def render_setup_screen():
         )
 
         enable_webcam = st.checkbox(
-            "📷 Enable Live Webcam Practice Mode",
+            "Enable Live Webcam Practice Mode",
             value=False,
             help="Show your live camera feed during the interview to practice posture and eye contact.",
         )
 
         enable_voice = st.checkbox(
-            "🎙️ Enable Voice-to-Voice Mode",
+            "Enable Voice-to-Voice Mode",
             value=False,
             help="Speak your answers via microphone and hear the AI Interviewer speak back to you.",
         )
 
-        submitted = st.form_submit_button("🚀 Start Interview", use_container_width=True)
+        submitted = st.form_submit_button("Start Interview", use_container_width=True)
 
     if submitted:
         if not target_role.strip():
@@ -115,31 +291,41 @@ def render_setup_screen():
 
 
 def render_interview_screen(state: InterviewState):
-    """Screen 2: Interactive Chat Interview."""
-    st.title("🎙️ Mock Interview Session")
+    """Screen 2: Interactive Chat Interview — Camera LEFT (2/3), Chat RIGHT (1/3)."""
+    st.markdown(MATERIAL_ICONS_CSS, unsafe_allow_html=True)
+    st.markdown(GLOBAL_CSS, unsafe_allow_html=True)
 
-    # Header stats
-    c1, c2, c3 = st.columns([3, 2, 2])
-    with c1:
-        st.caption(f"**Role:** {state.candidate.target_role} ({state.candidate.focus_area.value.capitalize()})")
-    with c2:
-        diff_label = {
-            1: "Beginner",
-            2: "Elementary",
-            3: "Intermediate",
-            4: "Advanced",
-            5: "Expert",
-        }.get(state.current_difficulty, str(state.current_difficulty))
-        st.caption(f"**Difficulty:** {diff_label} ({state.current_difficulty}/5)")
-    with c3:
-        st.caption(f"**Progress:** Turn {min(state.current_turn + 1, state.max_turns)} of {state.max_turns}")
+    # --- Top Header Bar ---
+    st.markdown(
+        f"""
+        <div class="ip-header">
+            <span class="material-icons-round" style="font-size:30px; color:#E06C3C;">record_voice_over</span>
+            <h1>Mock Interview Session</h1>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
+    # --- Stat Pills ---
+    diff_label = {1: "Beginner", 2: "Elementary", 3: "Intermediate", 4: "Advanced", 5: "Expert"}.get(
+        state.current_difficulty, str(state.current_difficulty)
+    )
+    st.markdown(
+        f"""
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+            <div class="ip-stat"><span class="material-icons-round">work</span>{state.candidate.target_role} &middot; {state.candidate.focus_area.value.capitalize()}</div>
+            <div class="ip-stat"><span class="material-icons-round">speed</span>{diff_label} ({state.current_difficulty}/5)</div>
+            <div class="ip-stat"><span class="material-icons-round">format_list_numbered</span>Turn {min(state.current_turn + 1, state.max_turns)} / {state.max_turns}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     st.progress(min(state.current_turn / state.max_turns, 1.0))
 
-    # Controls bar
+    # --- Control Buttons ---
     col_a, col_b = st.columns(2)
     with col_a:
-        if st.button("⏹️ End Interview Early", use_container_width=True):
+        if st.button("End Interview Early", use_container_width=True, type="secondary"):
             with st.spinner("Synthesizing feedback report on completed turns..."):
                 state.status = InterviewStatus.ENDED_EARLY
                 state.final_report = generate_coaching_report(state)
@@ -147,49 +333,80 @@ def render_interview_screen(state: InterviewState):
                 st.session_state["interview_state"] = state
                 st.rerun()
     with col_b:
-        if st.button("🔄 Start New Interview", use_container_width=True):
+        if st.button("Start New Interview", use_container_width=True, type="secondary"):
             reset_interview()
 
     st.markdown("---")
 
-    # Layout: Split into Chat Column and Camera Column if webcam enabled
+    # ========== MAIN SPLIT LAYOUT ==========
+    # Camera LEFT (2/3) | Chat RIGHT (1/3)
     if state.enable_webcam:
-        col_chat, col_cam = st.columns([3, 2])
+        col_cam, col_chat = st.columns([2, 1])
     else:
         col_chat = st.container()
         col_cam = None
 
+    # --- LEFT: Camera Feed ---
+    if col_cam:
+        with col_cam:
+            st.markdown(
+                f"""
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                    <span class="material-icons-round" style="font-size:22px; color:#E06C3C;">videocam</span>
+                    <span style="font-weight:600; font-size:1rem; color:#2D2A26;">Live Camera Feed</span>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            st.camera_input("Practice Feed", label_visibility="collapsed")
+
+    # --- RIGHT: Chat Panel ---
     with col_chat:
-        # Past Q&A chat history
-        for turn in state.transcript:
-            with st.chat_message("assistant"):
-                st.write(turn.question.question)
-            with st.chat_message("user"):
-                st.write(turn.answer)
+        # Past Q&A transcript (scrollable history)
+        if state.transcript:
+            with st.expander("View conversation history", expanded=False):
+                for turn in state.transcript:
+                    st.markdown(
+                        f'<div class="ip-history-q">{icon("psychology")} <strong>Q{turn.turn_number}:</strong> {turn.question.question}</div>',
+                        unsafe_allow_html=True,
+                    )
+                    st.markdown(
+                        f'<div class="ip-history-a">{icon("person")} {turn.answer}</div>',
+                        unsafe_allow_html=True,
+                    )
 
         # Current active question
         if state.current_question:
-            with st.chat_message("assistant"):
-                st.write(state.current_question.question)
-                
-                # If voice enabled, generate and play TTS audio of the question
-                if state.enable_voice:
-                    from services.audio_service import generate_speech, transcribe_audio
-                    from audio_recorder_streamlit import audio_recorder
-                    
-                    audio_bytes = generate_speech(state.current_question.question)
-                    if audio_bytes:
-                        st.audio(audio_bytes, format='audio/mp3', autoplay=True)
+            st.markdown(
+                f'<div class="ip-question-bubble">{icon_lg("psychology")} {state.current_question.question}</div>',
+                unsafe_allow_html=True,
+            )
 
-            # Candidate answer input (Text or Voice)
-            user_answer = ""
-            
+            # TTS Playback
             if state.enable_voice:
-                st.info("🎙️ Voice Mode Active: Click the microphone to record your answer.")
-                # We need a unique key for the audio recorder so it resets each turn
+                from services.audio_service import generate_speech, transcribe_audio
+                from audio_recorder_streamlit import audio_recorder
+
+                audio_bytes = generate_speech(state.current_question.question)
+                if audio_bytes:
+                    st.audio(audio_bytes, format='audio/mp3', autoplay=True)
+
+            # Candidate answer input
+            user_answer = ""
+
+            if state.enable_voice:
+                st.markdown(
+                    f"""
+                    <div class="ip-voice-banner">
+                        <span class="material-icons-round">mic</span>
+                        Voice Mode Active — Click to record, click again to stop.
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
                 recorder_key = f"audio_recorder_{state.current_turn}"
-                recorded_audio = audio_recorder(text=" Click to Record / Stop", key=recorder_key, pause_threshold=60.0)
-                
+                recorded_audio = audio_recorder(text=" Record / Stop", key=recorder_key, pause_threshold=60.0)
+
                 if recorded_audio:
                     with st.spinner("Transcribing audio..."):
                         transcribed = transcribe_audio(recorded_audio)
@@ -198,7 +415,7 @@ def render_interview_screen(state: InterviewState):
                             user_answer = transcribed
                         else:
                             st.error("Failed to transcribe audio. Please try typing instead.")
-                            
+
                 st.caption("Or type your answer below:")
 
             text_input = st.chat_input("Type your answer here...")
@@ -213,36 +430,24 @@ def render_interview_screen(state: InterviewState):
                     st.session_state["interview_state"] = updated_state
                     st.rerun()
 
-    if col_cam:
-        with col_cam:
-            st.markdown("##### 📷 Live Camera Feed")
-            st.caption("Practice eye contact and facial expressions while answering.")
-            
-            # Hide the "Take Photo" button via CSS injection
-            st.markdown(
-                """
-                <style>
-                [data-testid="stCameraInput"] button {
-                    display: none !important;
-                }
-                </style>
-                """,
-                unsafe_allow_html=True,
-            )
-            
-            st.camera_input("Practice Feed", label_visibility="collapsed")
-
 
 def render_analytics_dashboard(state: InterviewState):
     """Render interactive metrics and performance charts on the final report screen."""
-    st.subheader("📊 Session Analytics & Performance Trajectory")
+    st.markdown(
+        f"""
+        <div style="display:flex; align-items:center; gap:8px; margin:16px 0 8px 0;">
+            <span class="material-icons-round" style="font-size:24px; color:#E06C3C;">insights</span>
+            <span style="font-weight:700; font-size:1.15rem; color:#2D2A26;">Session Analytics & Performance Trajectory</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     evaluations = [turn.evaluation for turn in state.transcript if turn.evaluation]
     if not evaluations:
         st.info("No evaluation data available to chart.")
         return
 
-    # 1. High-level KPI summary cards
     avg_score = sum(e.overall_score for e in evaluations) / len(evaluations)
     max_difficulty = max((turn.question.difficulty for turn in state.transcript if turn.question), default=state.current_difficulty)
     turns_completed = len(state.transcript)
@@ -255,8 +460,12 @@ def render_analytics_dashboard(state: InterviewState):
     with col3:
         st.metric(label="Turns Completed", value=f"{turns_completed} / {state.max_turns}")
 
-    # 2. Turn-by-Turn Trajectory Chart
-    st.markdown("##### 📈 Performance & Difficulty Trajectory")
+    st.markdown(
+        f'<div style="display:flex;align-items:center;gap:6px;margin:12px 0 4px 0;">'
+        f'<span class="material-icons-round mi">trending_up</span>'
+        f'<strong>Performance & Difficulty Trajectory</strong></div>',
+        unsafe_allow_html=True,
+    )
     chart_data = {
         "Turn": [f"Turn {t.turn_number}" for t in state.transcript if t.evaluation],
         "Score (1-5)": [t.evaluation.overall_score for t in state.transcript if t.evaluation],
@@ -264,31 +473,37 @@ def render_analytics_dashboard(state: InterviewState):
     }
     st.line_chart(chart_data, x="Turn", y=["Score (1-5)", "Difficulty"])
 
-    # 3. Multi-Dimensional Skill Breakdown
     dim_scores: dict[str, list[float]] = {}
     for e in evaluations:
         for dim, score in e.dimension_scores.items():
             dim_scores.setdefault(dim.replace("_", " ").title(), []).append(score)
 
     if dim_scores:
-        st.markdown("##### 🎯 Multi-Dimensional Skill Breakdown")
+        st.markdown(
+            f'<div style="display:flex;align-items:center;gap:6px;margin:12px 0 4px 0;">'
+            f'<span class="material-icons-round mi">radar</span>'
+            f'<strong>Multi-Dimensional Skill Breakdown</strong></div>',
+            unsafe_allow_html=True,
+        )
         avg_dim_scores = {dim: round(sum(scores) / len(scores), 2) for dim, scores in dim_scores.items()}
         st.bar_chart(avg_dim_scores)
 
 
 def render_final_report_screen(state: InterviewState):
     """Screen 3: Final Coaching Report."""
-    if state.status == InterviewStatus.ENDED_EARLY:
-        st.warning("⚠️ Interview Ended Early by Candidate")
-    else:
-        st.success("🎉 Interview Complete!")
+    st.markdown(MATERIAL_ICONS_CSS, unsafe_allow_html=True)
+    st.markdown(GLOBAL_CSS, unsafe_allow_html=True)
 
-    # Export & Reset Controls
+    if state.status == InterviewStatus.ENDED_EARLY:
+        st.warning("Interview Ended Early by Candidate")
+    else:
+        st.success("Interview Complete!")
+
     col_d1, col_d2, col_r = st.columns([1, 1, 1])
     with col_d1:
         if state.final_report:
             st.download_button(
-                label="📥 Report (.md)",
+                label="Download Report (.md)",
                 data=state.final_report,
                 file_name=f"InterviewPilot_Report_{state.session_id}.md",
                 mime="text/markdown",
@@ -296,24 +511,22 @@ def render_final_report_screen(state: InterviewState):
             )
     with col_d2:
         st.download_button(
-            label="💾 Session (.json)",
+            label="Download Session (.json)",
             data=state.model_dump_json(indent=2),
             file_name=f"InterviewPilot_Session_{state.session_id}.json",
             mime="application/json",
             use_container_width=True,
         )
     with col_r:
-        if st.button("🔄 Start New Interview", use_container_width=True):
+        if st.button("Start New Interview", use_container_width=True):
             reset_interview()
 
     st.markdown("---")
 
-    # Analytics Dashboard
     render_analytics_dashboard(state)
 
     st.markdown("---")
 
-    # Main Coaching Report Markdown
     if state.final_report:
         st.markdown(state.final_report)
     else:
@@ -321,15 +534,14 @@ def render_final_report_screen(state: InterviewState):
 
     st.markdown("---")
 
-    # Expandable sections for Transcript and Evaluations
-    with st.expander("💬 View Full Conversation Transcript"):
+    with st.expander("View Full Conversation Transcript"):
         for turn in state.transcript:
             st.markdown(f"**Turn {turn.turn_number} ({turn.question.topic}):**")
             st.markdown(f"**Interviewer:** {turn.question.question}")
             st.markdown(f"**Candidate:** {turn.answer}")
             st.markdown("---")
 
-    with st.expander("📊 View Per-Question Evaluation Summaries"):
+    with st.expander("View Per-Question Evaluation Summaries"):
         for turn in state.transcript:
             if turn.evaluation:
                 st.markdown(f"**Turn {turn.turn_number} — {turn.question.topic}:**")
@@ -345,6 +557,11 @@ def render_final_report_screen(state: InterviewState):
 
 def main():
     """Application main router."""
+    st.set_page_config(
+        page_title="InterviewPilot",
+        page_icon="https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/target/default/48px.svg",
+        layout="wide",
+    )
     init_session_state()
 
     state: InterviewState | None = st.session_state.get("interview_state")
