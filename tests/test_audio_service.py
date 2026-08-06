@@ -36,8 +36,11 @@ def test_transcribe_audio_none():
     assert transcribe_audio(b"") is None
 
 
+@patch("services.audio_service._transcribe_free_google")
 @patch("services.audio_service.os.getenv")
-def test_transcribe_no_api_keys(mock_getenv):
-    """Verify it fails gracefully if no API keys are set."""
+def test_transcribe_no_api_keys(mock_getenv, mock_google):
+    """Verify it falls back to free google when no API keys are set."""
     mock_getenv.return_value = None
-    assert transcribe_audio(b"fake_audio") is None
+    mock_google.return_value = "Hello transcribed text"
+    result = transcribe_audio(b"fake_audio")
+    assert result == "Hello transcribed text"
