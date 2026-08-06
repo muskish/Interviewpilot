@@ -59,4 +59,15 @@ class Settings(BaseSettings):
         return key
 
 
+# Inject Streamlit Cloud Secrets into environment if running on Streamlit Cloud
+try:
+    import os
+    import streamlit as st
+    if hasattr(st, "secrets"):
+        for k, v in st.secrets.items():
+            if isinstance(v, (str, int, float, bool)):
+                os.environ.setdefault(k.upper(), str(v))
+except Exception:
+    pass
+
 settings = Settings()
