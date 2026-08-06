@@ -7,6 +7,8 @@ LLM_PROVIDER swappable via .env without touching agent code.
 """
 from __future__ import annotations
 
+import json
+import re
 import time
 from typing import TypeVar
 
@@ -47,7 +49,20 @@ def get_llm(temperature: float | None = None) -> BaseChatModel:
         from langchain_ollama import ChatOllama
         return ChatOllama(model=settings.llm_model, temperature=temp)
 
-    raise RuntimeError(f"Unknown LLM_PROVIDER: {provider}")  # unreachable — config.py already restricts this
+    raise RuntimeError(f"Unknown LLM_PROVIDER: {provider}")
+
+
+def _extract_json(text: str) -> dict:
+    """Extract JSON object from markdown codeblock or raw text string."""
+    # Search for ```json { ... } ``` block first
+    match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
+    if match:
+        return json.loads(match.group(1))
+    # Search for raw { ... }
+    match = re.search(r"(\{.*\})", text, re.DOTALL)
+    if match:
+        return json.loads(match.group(1))
+    return json.loads(text.strip())
 
 
 def generate_structured(
@@ -60,46 +75,64 @@ def generate_structured(
     """
     Call the LLM and force its response into `output_model` (a Pydantic model).
 
-    Retries on validation/parsing failure — LLMs occasionally return output
-    that doesn't match the schema. A bounded retry handles transient cases;
-    if it still fails after max_retries, we fallback to json_mode for Groq.
+    Uses a 3-tier fallback hierarchy:
+    1. LangChain structured output (tool-calling API)
+    2. json_mode fallback (Groq JSON format)
+    3. Text generation + regex JSON extraction + Pydantic schema validation
     """
     retries = settings.llm_max_retries if max_retries is None else max_retries
-    
-    # Primary method
-    try:
-        structured_llm = llm.with_structured_output(output_model)
-    except Exception:
-        structured_llm = llm.with_structured_output(output_model, method="json_mode")
-        if "json" not in user_message.lower():
-            user_message = user_message + "\nRespond strictly with a valid json object matching the requested schema."
-
     last_error: Exception | None = None
-    for attempt in range(1, retries + 2):  # +1 so "2 retries" means 3 total attempts
+
+    # Guarantee "json" is present in user message for Groq json_mode compatibility
+    formatted_user_msg = user_message
+    if "json" not in formatted_user_msg.lower():
         try:
+            schema_json = json.dumps(output_model.model_json_schema(), indent=2)
+            formatted_user_msg += f"\n\nRespond strictly with a JSON object matching this schema:\n{schema_json}"
+        except Exception:
+            formatted_user_msg += "\n\nRespond strictly with a valid JSON object."
+
+    for attempt in range(1, retries + 2):
+        # Tier 1 & 2: Structured Output API
+        try:
+            if attempt == 1:
+                structured_llm = llm.with_structured_output(output_model)
+            else:
+                structured_llm = llm.with_structured_output(output_model, method="json_mode")
+
             result = structured_llm.invoke(
                 [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_message},
+                    {"role": "system", "content": system_prompt + "\nYou must return valid json."},
+                    {"role": "user", "content": formatted_user_msg},
                 ]
             )
-            if not isinstance(result, output_model):
-                result = output_model.model_validate(result)
-            return result
+            if isinstance(result, output_model):
+                return result
+            if isinstance(result, dict):
+                return output_model.model_validate(result)
+            if isinstance(result, str):
+                return output_model.model_validate(_extract_json(result))
         except Exception as exc:
             last_error = exc
-            logger.warning(
-                "generate_structured: attempt %d/%d failed validating %s: %s. Retrying with json_mode...",
-                attempt, retries + 1, output_model.__name__, exc,
+            logger.warning("generate_structured: attempt %d/%d API call failed: %s", attempt, retries + 1, exc)
+
+        # Tier 3: Direct text completion + regex extraction fallback
+        try:
+            logger.info("generate_structured: attempting Tier 3 text completion fallback...")
+            raw_text = generate_text(
+                llm,
+                system_prompt=system_prompt + "\nOUTPUT REQUIREMENT: Output strictly a single JSON object. No extra markdown, explanations, or commentary.",
+                user_message=formatted_user_msg,
             )
-            # Switch to json_mode fallback if Groq tool-calling failed
-            try:
-                structured_llm = llm.with_structured_output(output_model, method="json_mode")
-                if "json" not in user_message.lower():
-                    user_message = user_message + "\nRespond strictly with a valid json object matching the requested schema."
-            except Exception:
-                pass
-            time.sleep(min(attempt, 2))
+            parsed_dict = _extract_json(raw_text)
+            validated = output_model.model_validate(parsed_dict)
+            logger.info("generate_structured: Tier 3 fallback successfully parsed %s!", output_model.__name__)
+            return validated
+        except Exception as exc3:
+            last_error = exc3
+            logger.warning("generate_structured: Tier 3 fallback failed: %s", exc3)
+
+        time.sleep(1)
 
     logger.error("generate_structured: giving up after %d attempts for %s", retries + 1, output_model.__name__)
     raise RuntimeError(
@@ -119,4 +152,4 @@ def generate_text(
             {"role": "user", "content": user_message},
         ]
     )
-    return str(response.content)
+    return str(response.content)
