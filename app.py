@@ -77,6 +77,12 @@ def render_setup_screen():
             help="Show your live camera feed during the interview to practice posture and eye contact.",
         )
 
+        enable_voice = st.checkbox(
+            "🎙️ Enable Voice-to-Voice Mode",
+            value=False,
+            help="Speak your answers via microphone and hear the AI Interviewer speak back to you.",
+        )
+
         submitted = st.form_submit_button("🚀 Start Interview", use_container_width=True)
 
     if submitted:
@@ -103,6 +109,7 @@ def render_setup_screen():
         with st.spinner("Generating role-aware interview strategy and first question..."):
             state = run_start_interview(candidate)
             state.enable_webcam = enable_webcam
+            state.enable_voice = enable_voice
             st.session_state["interview_state"] = state
             st.rerun()
 
@@ -164,13 +171,45 @@ def render_interview_screen(state: InterviewState):
         if state.current_question:
             with st.chat_message("assistant"):
                 st.write(state.current_question.question)
+                
+                # If voice enabled, generate and play TTS audio of the question
+                if state.enable_voice:
+                    from services.audio_service import generate_speech, transcribe_audio
+                    from audio_recorder_streamlit import audio_recorder
+                    
+                    audio_bytes = generate_speech(state.current_question.question)
+                    if audio_bytes:
+                        st.audio(audio_bytes, format='audio/mp3', autoplay=True)
 
-            # Candidate answer chat input
-            user_answer = st.chat_input("Type your answer here...")
-            if user_answer and user_answer.strip():
+            # Candidate answer input (Text or Voice)
+            user_answer = ""
+            
+            if state.enable_voice:
+                st.info("🎙️ Voice Mode Active: Click the microphone to record your answer.")
+                # We need a unique key for the audio recorder so it resets each turn
+                recorder_key = f"audio_recorder_{state.current_turn}"
+                recorded_audio = audio_recorder(text="", key=recorder_key)
+                
+                if recorded_audio:
+                    with st.spinner("Transcribing audio..."):
+                        transcribed = transcribe_audio(recorded_audio)
+                        if transcribed:
+                            st.success(f"Transcribed: *{transcribed}*")
+                            user_answer = transcribed
+                        else:
+                            st.error("Failed to transcribe audio. Please try typing instead.")
+                            
+                st.caption("Or type your answer below:")
+
+            text_input = st.chat_input("Type your answer here...")
+            if text_input and text_input.strip():
+                user_answer = text_input.strip()
+
+            if user_answer:
                 with st.spinner("Evaluating response & updating interview strategy..."):
-                    updated_state = run_answer_turn(state, user_answer.strip())
+                    updated_state = run_answer_turn(state, user_answer)
                     updated_state.enable_webcam = state.enable_webcam
+                    updated_state.enable_voice = state.enable_voice
                     st.session_state["interview_state"] = updated_state
                     st.rerun()
 
