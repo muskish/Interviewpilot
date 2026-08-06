@@ -282,6 +282,87 @@ hr { border-color: rgba(232,133,106,.15) !important; margin: 1.25rem 0 !importan
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(232,133,106,.30); border-radius: 100px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(232,133,106,.55); }
+
+/* ── Hero Section ────────────────────────────────────────────────────── */
+.ip-hero {
+    text-align: center;
+    padding: 2.5rem 1rem 1.5rem 1rem;
+}
+.ip-hero-title {
+    font-size: 2.8rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    background: var(--grad-accent);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: .35rem;
+    line-height: 1.15;
+}
+.ip-hero-sub {
+    font-size: 1.1rem;
+    color: var(--text-2);
+    max-width: 640px;
+    margin: 0 auto;
+    line-height: 1.7;
+}
+.ip-hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(232,133,106,.10);
+    border: 1px solid rgba(232,133,106,.22);
+    border-radius: 50px;
+    padding: 5px 16px;
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 1rem;
+    letter-spacing: .3px;
+}
+.ip-features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin: 1.5rem 0;
+}
+.ip-feat {
+    background: var(--grad-card);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border-gl);
+    border-radius: 20px;
+    padding: 1.3rem 1.2rem;
+    text-align: left;
+    box-shadow: var(--shadow-sm);
+    transition: transform .25s ease, box-shadow .25s ease;
+}
+.ip-feat:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+}
+.ip-feat-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    background: var(--grad-accent);
+    margin-bottom: 10px;
+}
+.ip-feat-icon .material-icons-round { font-size: 20px; color: #fff; }
+.ip-feat h4 {
+    margin: 0 0 4px 0;
+    font-size: .92rem;
+    font-weight: 700;
+    color: var(--text-1);
+}
+.ip-feat p {
+    margin: 0;
+    font-size: .82rem;
+    color: var(--text-2);
+    line-height: 1.55;
+}
 </style>"""
 
 
@@ -311,8 +392,56 @@ def reset_interview():
 
 def render_setup_screen():
     """Screen 1: Candidate Setup Form."""
-    st.markdown('<div class="ip-header"><span class="material-icons-round" style="font-size:36px;color:var(--accent);">target</span><h1>InterviewPilot</h1></div>', unsafe_allow_html=True)
-    st.caption("Adaptive AI Mock Interview Coach — powered by LangGraph Agentic Workflows")
+    # ── Hero Section ──────────────────────────────────────────────────
+    st.markdown(
+        """
+        <div class="ip-hero">
+            <div class="ip-hero-badge">
+                <span class="material-icons-round" style="font-size:14px;">auto_awesome</span>
+                Powered by LangGraph Agentic AI
+            </div>
+            <div class="ip-hero-title">InterviewPilot</div>
+            <p class="ip-hero-sub">
+                Your AI-powered mock interview coach that adapts in real time.
+                Practice for any role with dynamic questions, instant feedback,
+                and a detailed coaching report — all for free.
+            </p>
+        </div>
+        <div class="ip-features">
+            <div class="ip-feat">
+                <div class="ip-feat-icon"><span class="material-icons-round">psychology</span></div>
+                <h4>Adaptive Difficulty</h4>
+                <p>Questions scale from beginner to expert based on your live performance — just like a real interview.</p>
+            </div>
+            <div class="ip-feat">
+                <div class="ip-feat-icon"><span class="material-icons-round">mic</span></div>
+                <h4>Voice or Text</h4>
+                <p>Type your answers or speak naturally — the AI transcribes and evaluates either way.</p>
+            </div>
+            <div class="ip-feat">
+                <div class="ip-feat-icon"><span class="material-icons-round">videocam</span></div>
+                <h4>Webcam Practice</h4>
+                <p>See yourself on camera to practice eye contact, posture, and facial expressions.</p>
+            </div>
+            <div class="ip-feat">
+                <div class="ip-feat-icon"><span class="material-icons-round">assessment</span></div>
+                <h4>Coaching Report</h4>
+                <p>Get a multi-dimensional skill breakdown, performance trajectory, and actionable improvement tips.</p>
+            </div>
+            <div class="ip-feat">
+                <div class="ip-feat-icon"><span class="material-icons-round">description</span></div>
+                <h4>Resume-Aware</h4>
+                <p>Upload your resume and the AI tailors questions to your actual experience and skills.</p>
+            </div>
+            <div class="ip-feat">
+                <div class="ip-feat-icon"><span class="material-icons-round">picture_as_pdf</span></div>
+                <h4>PDF Export</h4>
+                <p>Download your full coaching report as a professional PDF to share with mentors or revisit later.</p>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     st.markdown("---")
 
     with st.form("setup_form"):
