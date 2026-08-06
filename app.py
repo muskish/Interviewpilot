@@ -15,162 +15,274 @@ from models.candidate import CandidateProfile, FocusArea
 from models.interview_state import InterviewState, InterviewStatus
 from orchestration.graph import run_answer_turn, run_start_interview
 from services.session_service import save_session
+from services.pdf_service import generate_report_pdf
 
 
-# --- Google Material Icons via CDN ---
-MATERIAL_ICONS_CSS = """
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-"""
+GLOBAL_CSS = """<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons+Round');
 
-GLOBAL_CSS = """
-<style>
-/* --- Global Font & Theme --- */
-html, body, [class*="css"] {
+/* ── Self-collapsing injection (removes blank space Streamlit creates) ─ */
+[data-testid="stMarkdownContainer"]:has(> style:only-child) {
+    display: none !important; height: 0 !important; overflow: hidden !important;
+}
+
+/* ── Global font ─────────────────────────────────────────────────────── */
+html, body, [class*="css"], .stMarkdown {
     font-family: 'Inter', sans-serif !important;
 }
 
-/* --- Warm Accent Colors --- */
+/* ── Design tokens ───────────────────────────────────────────────────── */
 :root {
-    --accent: #E06C3C;
-    --accent-light: #F2A07B;
-    --bg-warm: #FDF8F4;
-    --bg-card: #FFFFFF;
-    --border-warm: #EDE0D4;
-    --text-primary: #2D2A26;
-    --text-secondary: #6B6560;
+    --accent:       #E8856A;
+    --accent-lt:    #F2A484;
+    --accent-dk:    #D4674E;
+    --bg:           #FAF7F4;
+    --card:         rgba(255,255,255,0.78);
+    --glass:        rgba(255,255,255,0.55);
+    --border:       rgba(232,133,106,0.18);
+    --border-gl:    rgba(255,255,255,0.45);
+    --shadow-sm:    0 4px 16px rgba(232,133,106,0.10);
+    --shadow-md:    0 8px 32px rgba(232,133,106,0.15);
+    --shadow-lg:    0 16px 48px rgba(232,133,106,0.22);
+    --text-1:       #2D2A26;
+    --text-2:       #6B6560;
+    --text-3:       #9B9490;
+    --grad-hero:    linear-gradient(135deg,#FAF7F4 0%,#F5EDE6 60%,#EDD9CC 100%);
+    --grad-accent:  linear-gradient(135deg,#E8856A 0%,#F2A484 100%);
+    --grad-card:    linear-gradient(145deg,rgba(255,255,255,0.92) 0%,rgba(255,255,255,0.68) 100%);
 }
 
-/* --- Card Containers --- */
+/* ── Glassmorphism card ──────────────────────────────────────────────── */
 .ip-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-warm);
-    border-radius: 16px;
-    padding: 1.5rem;
+    background: var(--grad-card);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border-gl);
+    border-radius: 24px;
+    padding: 1.75rem;
     margin-bottom: 1rem;
-    box-shadow: 0 2px 12px rgba(45, 42, 38, 0.04);
+    box-shadow: var(--shadow-md);
+    transition: box-shadow .25s ease, transform .25s ease;
 }
+.ip-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
 
-/* --- Stat Pill --- */
+/* ── Stat pill ───────────────────────────────────────────────────────── */
 .ip-stat {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: var(--bg-warm);
-    border: 1px solid var(--border-warm);
-    border-radius: 24px;
-    padding: 6px 16px;
-    font-size: 0.82rem;
+    background: linear-gradient(135deg,rgba(255,255,255,.90),rgba(242,164,132,.12));
+    border: 1px solid rgba(232,133,106,.20);
+    border-radius: 50px;
+    padding: 7px 18px;
+    font-size: .82rem;
     font-weight: 500;
-    color: var(--text-primary);
+    color: var(--text-1);
+    box-shadow: 0 2px 8px rgba(232,133,106,.10);
 }
-.ip-stat .material-icons-round {
-    font-size: 16px;
-    color: var(--accent);
-}
+.ip-stat .material-icons-round { font-size: 15px; color: var(--accent); }
 
-/* --- Icon Helper --- */
-.mi { vertical-align: middle; font-size: 18px !important; color: var(--accent); margin-right: 4px; }
-.mi-lg { vertical-align: middle; font-size: 22px !important; color: var(--accent); margin-right: 6px; }
-
-/* --- Header Bar --- */
+/* ── Header ──────────────────────────────────────────────────────────── */
 .ip-header {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px 0;
+    gap: 14px;
+    padding: 12px 0 4px 0;
 }
 .ip-header h1 {
     margin: 0;
-    font-size: 1.6rem;
+    font-size: 1.9rem;
     font-weight: 700;
-    color: var(--text-primary);
+    background: var(--grad-accent);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -.5px;
 }
 
-/* --- Question Bubble --- */
+/* ── Icon helpers ────────────────────────────────────────────────────── */
+.mi    { vertical-align: middle; font-size: 18px !important; color: var(--accent); margin-right: 4px; }
+.mi-lg { vertical-align: middle; font-size: 24px !important; color: var(--accent); margin-right: 6px; }
+
+/* ── Question bubble ─────────────────────────────────────────────────── */
 .ip-question-bubble {
-    background: linear-gradient(135deg, #FFF5EE 0%, #FDF0E8 100%);
+    background: linear-gradient(135deg,rgba(255,255,255,.95),rgba(242,164,132,.08));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border-left: 4px solid var(--accent);
-    border-radius: 0 16px 16px 0;
-    padding: 1.2rem 1.5rem;
-    margin: 0.8rem 0;
+    border-radius: 0 20px 20px 0;
+    padding: 1.25rem 1.5rem;
+    margin: .8rem 0;
     font-size: 1rem;
-    line-height: 1.6;
-    color: var(--text-primary);
+    line-height: 1.65;
+    color: var(--text-1);
+    box-shadow: var(--shadow-sm);
 }
 
-/* --- Transcript History Entry --- */
+/* ── Transcript bubbles ──────────────────────────────────────────────── */
 .ip-history-q {
-    background: #FFF9F5;
-    border-left: 3px solid var(--accent-light);
-    border-radius: 0 12px 12px 0;
-    padding: 0.8rem 1.2rem;
-    margin: 0.4rem 0;
-    font-size: 0.9rem;
-    color: var(--text-primary);
+    background: linear-gradient(135deg,rgba(255,255,255,.9),rgba(232,133,106,.05));
+    border-left: 3px solid var(--accent-lt);
+    border-radius: 0 16px 16px 0;
+    padding: .75rem 1.2rem;
+    margin: .35rem 0;
+    font-size: .9rem;
+    color: var(--text-1);
 }
 .ip-history-a {
-    background: #F0F7F0;
-    border-left: 3px solid #7CB97C;
-    border-radius: 0 12px 12px 0;
-    padding: 0.8rem 1.2rem;
-    margin: 0.4rem 0 0.8rem 0;
-    font-size: 0.9rem;
-    color: var(--text-primary);
+    background: linear-gradient(135deg,rgba(255,255,255,.9),rgba(120,193,149,.08));
+    border-left: 3px solid #78C195;
+    border-radius: 0 16px 16px 0;
+    padding: .75rem 1.2rem;
+    margin: .35rem 0 .8rem 0;
+    font-size: .9rem;
+    color: var(--text-1);
 }
 
-/* --- Voice Info Banner --- */
+/* ── Voice banner ────────────────────────────────────────────────────── */
 .ip-voice-banner {
     display: flex;
     align-items: center;
     gap: 8px;
-    background: #FFF5EE;
-    border: 1px solid var(--border-warm);
-    border-radius: 12px;
-    padding: 10px 16px;
-    font-size: 0.88rem;
-    color: var(--text-secondary);
+    background: linear-gradient(135deg,rgba(255,255,255,.9),rgba(232,133,106,.07));
+    border: 1px solid rgba(232,133,106,.20);
+    border-radius: 16px;
+    padding: 11px 18px;
+    font-size: .88rem;
+    color: var(--text-2);
     margin: 8px 0;
+    backdrop-filter: blur(8px);
 }
-.ip-voice-banner .material-icons-round {
-    color: var(--accent);
-    font-size: 20px;
-}
+.ip-voice-banner .material-icons-round { color: var(--accent); font-size: 20px; }
 
-/* --- Camera container styling --- */
-.ip-camera-wrap {
-    border-radius: 20px;
-    overflow: hidden;
-    border: 2px solid var(--border-warm);
-    box-shadow: 0 4px 24px rgba(45, 42, 38, 0.08);
-}
+/* ── Progress bar ────────────────────────────────────────────────────── */
+.stProgress > div > div { background: var(--grad-accent) !important; border-radius: 100px !important; }
+.stProgress > div { border-radius: 100px !important; background: rgba(232,133,106,.12) !important; height: 6px !important; }
 
-/* Hide camera Take Photo button */
-[data-testid="stCameraInput"] button {
-    display: none !important;
-}
-[data-testid="stCameraInput"] {
-    border-radius: 20px;
-    overflow: hidden;
-}
-
-/* --- Progress bar warm color --- */
-.stProgress > div > div {
-    background-color: var(--accent) !important;
-}
-
-/* --- Button warm accent --- */
+/* ── Buttons ─────────────────────────────────────────────────────────── */
 .stButton > button {
-    border-radius: 12px !important;
+    border-radius: 16px !important;
     font-weight: 600 !important;
-    transition: all 0.2s ease !important;
+    font-size: .9rem !important;
+    border: 1px solid rgba(232,133,106,.30) !important;
+    transition: all .25s cubic-bezier(.4,0,.2,1) !important;
+    background: var(--card) !important;
+    color: var(--text-1) !important;
 }
 .stButton > button:hover {
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 12px rgba(224, 108, 60, 0.25) !important;
+    background: var(--grad-accent) !important;
+    color: #fff !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 24px rgba(232,133,106,.35) !important;
+    border-color: transparent !important;
 }
-</style>
-"""
+.stButton > button[kind="primary"] {
+    background: var(--grad-accent) !important;
+    color: #fff !important;
+    border-color: transparent !important;
+    box-shadow: var(--shadow-sm) !important;
+}
+
+/* ── Form inputs ─────────────────────────────────────────────────────── */
+.stTextInput > div > div > input,
+.stTextArea > div > div > textarea {
+    border-radius: 14px !important;
+    border: 1.5px solid rgba(232,133,106,.22) !important;
+    background: rgba(255,255,255,.80) !important;
+    backdrop-filter: blur(8px) !important;
+    font-family: 'Inter', sans-serif !important;
+    transition: border-color .2s ease, box-shadow .2s ease !important;
+}
+.stTextInput > div > div > input:focus,
+.stTextArea > div > div > textarea:focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 3px rgba(232,133,106,.15) !important;
+}
+.stSelectbox > div > div {
+    border-radius: 14px !important;
+    border: 1.5px solid rgba(232,133,106,.22) !important;
+    background: rgba(255,255,255,.80) !important;
+}
+
+/* ── Metric cards ────────────────────────────────────────────────────── */
+[data-testid="stMetric"] {
+    background: var(--card) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border-radius: 20px !important;
+    padding: 1.1rem 1.4rem !important;
+    border: 1px solid var(--border) !important;
+    box-shadow: var(--shadow-sm) !important;
+}
+[data-testid="stMetricLabel"] { font-size: .8rem !important; color: var(--text-2) !important; font-weight: 500 !important; }
+[data-testid="stMetricValue"] { font-weight: 700 !important; color: var(--text-1) !important; }
+
+/* ── File uploader ───────────────────────────────────────────────────── */
+[data-testid="stFileUploaderDropzone"] {
+    border-radius: 16px !important;
+    border: 2px dashed rgba(232,133,106,.35) !important;
+    background: rgba(255,255,255,.60) !important;
+    backdrop-filter: blur(8px) !important;
+    transition: border-color .2s ease !important;
+}
+[data-testid="stFileUploaderDropzone"]:hover { border-color: var(--accent) !important; }
+
+/* ── Expander ────────────────────────────────────────────────────────── */
+[data-testid="stExpander"] {
+    border-radius: 18px !important;
+    border: 1px solid var(--border) !important;
+    overflow: hidden !important;
+    background: var(--card) !important;
+}
+
+/* ── Camera ──────────────────────────────────────────────────────────── */
+[data-testid="stCameraInput"] button { display: none !important; }
+[data-testid="stCameraInput"] { border-radius: 24px !important; overflow: hidden !important; }
+
+/* ── Alerts ──────────────────────────────────────────────────────────── */
+[data-testid="stAlert"], .stSuccess, .stWarning, .stError { border-radius: 16px !important; }
+
+/* ── Download button ─────────────────────────────────────────────────── */
+[data-testid="stDownloadButton"] > button {
+    border-radius: 16px !important;
+    background: var(--card) !important;
+    border: 1px solid rgba(232,133,106,.30) !important;
+    font-weight: 600 !important;
+    transition: all .25s ease !important;
+}
+[data-testid="stDownloadButton"] > button:hover {
+    background: var(--grad-accent) !important;
+    color: #fff !important;
+    border-color: transparent !important;
+    box-shadow: var(--shadow-md) !important;
+}
+
+/* ── Chat input ──────────────────────────────────────────────────────── */
+[data-testid="stChatInput"] > div {
+    border-radius: 20px !important;
+    border: 1.5px solid rgba(232,133,106,.25) !important;
+    background: rgba(255,255,255,.85) !important;
+}
+
+/* ── Charts ──────────────────────────────────────────────────────────── */
+[data-testid="stVegaLiteChart"] {
+    border-radius: 20px !important;
+    overflow: hidden !important;
+    padding: 1rem !important;
+    background: var(--card) !important;
+    box-shadow: var(--shadow-sm) !important;
+}
+
+/* ── Divider ─────────────────────────────────────────────────────────── */
+hr { border-color: rgba(232,133,106,.15) !important; margin: 1.25rem 0 !important; }
+
+/* ── Scrollbar ───────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(232,133,106,.30); border-radius: 100px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(232,133,106,.55); }
+</style>"""
 
 
 def icon(name: str, size: str = "") -> str:
@@ -199,18 +311,7 @@ def reset_interview():
 
 def render_setup_screen():
     """Screen 1: Candidate Setup Form."""
-    st.markdown(MATERIAL_ICONS_CSS, unsafe_allow_html=True)
-    st.markdown(GLOBAL_CSS, unsafe_allow_html=True)
-
-    st.markdown(
-        f"""
-        <div class="ip-header">
-            <span class="material-icons-round" style="font-size:36px; color:#E06C3C;">target</span>
-            <h1>InterviewPilot</h1>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.markdown('<div class="ip-header"><span class="material-icons-round" style="font-size:36px;color:var(--accent);">target</span><h1>InterviewPilot</h1></div>', unsafe_allow_html=True)
     st.caption("Adaptive AI Mock Interview Coach — powered by LangGraph Agentic Workflows")
     st.markdown("---")
 
@@ -292,32 +393,19 @@ def render_setup_screen():
 
 def render_interview_screen(state: InterviewState):
     """Screen 2: Interactive Chat Interview — Camera LEFT (2/3), Chat RIGHT (1/3)."""
-    st.markdown(MATERIAL_ICONS_CSS, unsafe_allow_html=True)
-    st.markdown(GLOBAL_CSS, unsafe_allow_html=True)
-
     # --- Top Header Bar ---
-    st.markdown(
-        f"""
-        <div class="ip-header">
-            <span class="material-icons-round" style="font-size:30px; color:#E06C3C;">record_voice_over</span>
-            <h1>Mock Interview Session</h1>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.markdown('<div class="ip-header"><span class="material-icons-round" style="font-size:30px;color:var(--accent);">record_voice_over</span><h1>Mock Interview Session</h1></div>', unsafe_allow_html=True)
 
     # --- Stat Pills ---
     diff_label = {1: "Beginner", 2: "Elementary", 3: "Intermediate", 4: "Advanced", 5: "Expert"}.get(
         state.current_difficulty, str(state.current_difficulty)
     )
     st.markdown(
-        f"""
-        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
-            <div class="ip-stat"><span class="material-icons-round">work</span>{state.candidate.target_role} &middot; {state.candidate.focus_area.value.capitalize()}</div>
-            <div class="ip-stat"><span class="material-icons-round">speed</span>{diff_label} ({state.current_difficulty}/5)</div>
-            <div class="ip-stat"><span class="material-icons-round">format_list_numbered</span>Turn {min(state.current_turn + 1, state.max_turns)} / {state.max_turns}</div>
-        </div>
-        """,
+        f'<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px;">'
+        f'<div class="ip-stat"><span class="material-icons-round">work</span>{state.candidate.target_role} &middot; {state.candidate.focus_area.value.capitalize()}</div>'
+        f'<div class="ip-stat"><span class="material-icons-round">speed</span>{diff_label} ({state.current_difficulty}/5)</div>'
+        f'<div class="ip-stat"><span class="material-icons-round">format_list_numbered</span>Turn {min(state.current_turn + 1, state.max_turns)} / {state.max_turns}</div>'
+        f'</div>',
         unsafe_allow_html=True,
     )
     st.progress(min(state.current_turn / state.max_turns, 1.0))
@@ -349,15 +437,7 @@ def render_interview_screen(state: InterviewState):
     # --- LEFT: Camera Feed ---
     if col_cam:
         with col_cam:
-            st.markdown(
-                f"""
-                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-                    <span class="material-icons-round" style="font-size:22px; color:#E06C3C;">videocam</span>
-                    <span style="font-weight:600; font-size:1rem; color:#2D2A26;">Live Camera Feed</span>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+            st.markdown('<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span class="material-icons-round" style="font-size:22px;color:var(--accent);">videocam</span><span style="font-weight:600;font-size:1rem;color:var(--text-1);">Live Camera Feed</span></div>', unsafe_allow_html=True)
             st.camera_input("Practice Feed", label_visibility="collapsed")
 
     # --- RIGHT: Chat Panel ---
@@ -395,15 +475,7 @@ def render_interview_screen(state: InterviewState):
             user_answer = ""
 
             if state.enable_voice:
-                st.markdown(
-                    f"""
-                    <div class="ip-voice-banner">
-                        <span class="material-icons-round">mic</span>
-                        Voice Mode Active — Click to record, click again to stop.
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
+                st.markdown('<div class="ip-voice-banner"><span class="material-icons-round">mic</span>Voice Mode Active — Click to record, click again to stop.</div>', unsafe_allow_html=True)
                 recorder_key = f"audio_recorder_{state.current_turn}"
                 recorded_audio = audio_recorder(text=" Record / Stop", key=recorder_key, pause_threshold=60.0)
 
@@ -433,15 +505,7 @@ def render_interview_screen(state: InterviewState):
 
 def render_analytics_dashboard(state: InterviewState):
     """Render interactive metrics and performance charts on the final report screen."""
-    st.markdown(
-        f"""
-        <div style="display:flex; align-items:center; gap:8px; margin:16px 0 8px 0;">
-            <span class="material-icons-round" style="font-size:24px; color:#E06C3C;">insights</span>
-            <span style="font-weight:700; font-size:1.15rem; color:#2D2A26;">Session Analytics & Performance Trajectory</span>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.markdown('<div style="display:flex;align-items:center;gap:8px;margin:16px 0 8px 0;"><span class="material-icons-round" style="font-size:24px;color:var(--accent);">insights</span><span style="font-weight:700;font-size:1.15rem;color:var(--text-1);">Session Analytics &amp; Performance Trajectory</span></div>', unsafe_allow_html=True)
 
     evaluations = [turn.evaluation for turn in state.transcript if turn.evaluation]
     if not evaluations:
@@ -460,12 +524,7 @@ def render_analytics_dashboard(state: InterviewState):
     with col3:
         st.metric(label="Turns Completed", value=f"{turns_completed} / {state.max_turns}")
 
-    st.markdown(
-        f'<div style="display:flex;align-items:center;gap:6px;margin:12px 0 4px 0;">'
-        f'<span class="material-icons-round mi">trending_up</span>'
-        f'<strong>Performance & Difficulty Trajectory</strong></div>',
-        unsafe_allow_html=True,
-    )
+    st.markdown('<div style="display:flex;align-items:center;gap:6px;margin:12px 0 4px 0;"><span class="material-icons-round mi">trending_up</span><strong>Performance &amp; Difficulty Trajectory</strong></div>', unsafe_allow_html=True)
     chart_data = {
         "Turn": [f"Turn {t.turn_number}" for t in state.transcript if t.evaluation],
         "Score (1-5)": [t.evaluation.overall_score for t in state.transcript if t.evaluation],
@@ -479,39 +538,41 @@ def render_analytics_dashboard(state: InterviewState):
             dim_scores.setdefault(dim.replace("_", " ").title(), []).append(score)
 
     if dim_scores:
-        st.markdown(
-            f'<div style="display:flex;align-items:center;gap:6px;margin:12px 0 4px 0;">'
-            f'<span class="material-icons-round mi">radar</span>'
-            f'<strong>Multi-Dimensional Skill Breakdown</strong></div>',
-            unsafe_allow_html=True,
-        )
+        st.markdown('<div style="display:flex;align-items:center;gap:6px;margin:12px 0 4px 0;"><span class="material-icons-round mi">radar</span><strong>Multi-Dimensional Skill Breakdown</strong></div>', unsafe_allow_html=True)
         avg_dim_scores = {dim: round(sum(scores) / len(scores), 2) for dim, scores in dim_scores.items()}
         st.bar_chart(avg_dim_scores)
 
 
 def render_final_report_screen(state: InterviewState):
     """Screen 3: Final Coaching Report."""
-    st.markdown(MATERIAL_ICONS_CSS, unsafe_allow_html=True)
-    st.markdown(GLOBAL_CSS, unsafe_allow_html=True)
-
     if state.status == InterviewStatus.ENDED_EARLY:
         st.warning("Interview Ended Early by Candidate")
     else:
         st.success("Interview Complete!")
 
-    col_d1, col_d2, col_r = st.columns([1, 1, 1])
+    col_d1, col_d2, col_d3, col_r = st.columns([1, 1, 1, 1])
     with col_d1:
         if state.final_report:
             st.download_button(
-                label="Download Report (.md)",
+                label="Report (.md)",
                 data=state.final_report,
                 file_name=f"InterviewPilot_Report_{state.session_id}.md",
                 mime="text/markdown",
                 use_container_width=True,
             )
     with col_d2:
+        if state.final_report:
+            pdf_bytes = generate_report_pdf(state)
+            st.download_button(
+                label="Report (.pdf)",
+                data=pdf_bytes,
+                file_name=f"InterviewPilot_Report_{state.session_id}.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+            )
+    with col_d3:
         st.download_button(
-            label="Download Session (.json)",
+            label="Session (.json)",
             data=state.model_dump_json(indent=2),
             file_name=f"InterviewPilot_Session_{state.session_id}.json",
             mime="application/json",
@@ -559,10 +620,13 @@ def main():
     """Application main router."""
     st.set_page_config(
         page_title="InterviewPilot",
-        page_icon="https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsrounded/target/default/48px.svg",
+        page_icon="🎯",
         layout="wide",
     )
     init_session_state()
+
+    # Inject global CSS once — self-collapsing rule keeps it zero-height
+    st.markdown(GLOBAL_CSS, unsafe_allow_html=True)
 
     state: InterviewState | None = st.session_state.get("interview_state")
 
