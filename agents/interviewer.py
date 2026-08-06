@@ -70,18 +70,21 @@ def generate_question(
     # Question Bank RAG context lookup
     rag_context = ""
     if state.candidate and state.candidate.target_role:
-        from services.rag_service import retrieve_relevant_questions
-        rag_snippets = retrieve_relevant_questions(
-            role=state.candidate.target_role,
-            topic=target_topic,
-            difficulty=target_difficulty,
-            top_k=2,
-        )
-        if rag_snippets:
-            rag_context = (
-                f"RAG Question Bank Exemplars (Use for guidance/style):\n"
-                f"{rag_snippets}\n\n"
+        try:
+            from services.rag_service import retrieve_relevant_questions
+            rag_snippets = retrieve_relevant_questions(
+                role=state.candidate.target_role,
+                topic=target_topic,
+                difficulty=target_difficulty,
+                top_k=2,
             )
+            if rag_snippets:
+                rag_context = (
+                    f"RAG Question Bank Exemplars (Use for guidance/style):\n"
+                    f"{rag_snippets}\n\n"
+                )
+        except Exception as rag_err:
+            logger.warning("Interviewer: RAG question lookup skipped: %s", rag_err)
 
     target_role = state.candidate.target_role if state.candidate else "Software Engineer"
     user_message = (

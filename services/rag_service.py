@@ -43,13 +43,11 @@ def retrieve_question_context(topic: str, focus_area: str, difficulty: int) -> d
     topic_lower = topic.lower()
     focus_lower = focus_area.lower()
 
-    # 1. Filter by focus_area and topic match
     candidates = []
     for item in bank:
         item_topic = str(item.get("topic", "")).lower()
         item_focus = str(item.get("focus_area", "")).lower()
-        
-        # Check topic similarity or key concept match
+
         topic_match = (
             topic_lower in item_topic
             or item_topic in topic_lower
@@ -58,18 +56,25 @@ def retrieve_question_context(topic: str, focus_area: str, difficulty: int) -> d
         focus_match = item_focus == focus_lower
 
         if focus_match or topic_match:
-            # Score candidate by difficulty distance and topic match bonus
             diff_score = abs(item.get("difficulty", 3) - difficulty)
             topic_bonus = 0 if topic_match else 1
             candidates.append((diff_score + topic_bonus, item))
 
     if not candidates:
-        # Fallback to any question matching focus area or closest difficulty overall
         candidates = [(abs(item.get("difficulty", 3) - difficulty), item) for item in bank]
 
-    # Sort candidates by best match score (lowest score is best)
     candidates.sort(key=lambda x: x[0])
     best_match = candidates[0][1]
 
-    logger.info("RAG: Retrieved question seed %r (topic=%s, difficulty=%d)", best_match["id"], best_match.get("topic"), best_match.get("difficulty"))
+    logger.info("RAG: Retrieved question seed %r (topic=%s, difficulty=%d)", best_match.get("id"), best_match.get("topic"), best_match.get("difficulty"))
     return best_match
+
+
+def retrieve_relevant_questions(role: str = "", topic: str = "", difficulty: int = 3, top_k: int = 2) -> str:
+    """Retrieve relevant questions formatted as string snippets for RAG prompt inclusion."""
+    match = retrieve_question_context(topic=topic, focus_area="technical", difficulty=difficulty)
+    if not match:
+        return ""
+    q_text = match.get("question", match.get("prompt", ""))
+    rubric = match.get("rubric", {})
+    return f"- Topic: {match.get('topic')}\n  Question: {q_text}\n  Rubric: {json.dumps(rubric)}"
