@@ -178,9 +178,20 @@ def render_interview_screen(state: InterviewState):
         with col_cam:
             st.markdown("##### 📷 Live Camera Feed")
             st.caption("Practice eye contact and facial expressions while answering.")
-            picture = st.camera_input("Practice Feed")
-            if picture:
-                st.success("✅ Posture & Eye Contact Snapshot Captured!")
+            
+            # Hide the "Take Photo" button via CSS injection
+            st.markdown(
+                """
+                <style>
+                [data-testid="stCameraInput"] button {
+                    display: none !important;
+                }
+                </style>
+                """,
+                unsafe_allow_html=True,
+            )
+            
+            st.camera_input("Practice Feed", label_visibility="collapsed")
 
 
 def render_analytics_dashboard(state: InterviewState):
