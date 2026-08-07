@@ -187,6 +187,10 @@ def _get_clean_json_example(output_model: type[BaseModel]) -> str:
             sample[name] = ["Clear explanation"]
         elif name == "weaknesses":
             sample[name] = ["Could provide more detail"]
+        elif name == "question":
+            sample[name] = "Could you explain your approach to designing scalable systems and handling key trade-offs?"
+        elif name == "topic":
+            sample[name] = "System Design"
         elif name == "follow_up_focus":
             sample[name] = "System scalability"
         elif hasattr(ann, "__members__"):

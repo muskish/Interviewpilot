@@ -111,7 +111,7 @@ def generate_question(
         target_topic,
         target_difficulty,
     )
-    llm = get_llm()
+    llm = get_llm_structured()
     try:
         question = generate_structured(
             llm=llm,
@@ -128,6 +128,14 @@ def generate_question(
             topic=target_topic,
             difficulty=target_difficulty,
         )
+
+    # Validation Guardrail: Ensure generated question is a complete sentence (not truncated words like "Let")
+    if not question.question or len(question.question.strip()) < 15:
+        logger.warning(
+            "Interviewer: LLM returned incomplete/truncated question %r; substituting complete question.",
+            question.question,
+        )
+        question.question = f"Could you explain your technical experience and key engineering principles when working with {target_topic}?"
 
     logger.info(
         "Interviewer: generated question type=%s topic=%r diff=%d",
