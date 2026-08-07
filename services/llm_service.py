@@ -152,6 +152,12 @@ def _normalize_dict_for_enums(data: Any) -> Any:
 _RATE_LIMIT_FAST_FAIL_SECONDS = 30  # If Groq says "wait > Xs", skip retries immediately.
 
 
+def _is_rate_limit_error(exc: Exception) -> bool:
+    """Check if an exception is a rate limit (429) error from Groq or LLM providers."""
+    err_str = (str(exc) + " " + str(getattr(exc, "__cause__", "")) + " " + str(getattr(exc, "args", ""))).lower()
+    return any(k in err_str for k in ["429", "rate limit", "rate_limit", "tpd", "tpm", "rpm", "quota", "too many requests"])
+
+
 def _parse_rate_limit_wait(error_str: str) -> float | None:
     """
     Parse a Groq 429 error message and return the suggested wait in seconds.
@@ -184,10 +190,8 @@ def generate_structured(
     2. json_mode fallback (Groq JSON format)
     3. Text generation + brace-count JSON extraction + Pydantic schema validation
 
-    429 fast-fail: if a rate-limit error carries a "try again in Xs" wait time
-    longer than _RATE_LIMIT_FAST_FAIL_SECONDS, the remaining retries are skipped
-    immediately — there is no point sleeping 1.5 s between calls that Groq will
-    reject for the next several minutes.
+    429 fast-fail: if a rate-limit error occurs, retries and Tier 3 text completion
+    are skipped immediately — Groq free tier rate limits cannot be cleared by retrying.
     """
     retries = settings.llm_max_retries if max_retries is None else max_retries
     last_error: Exception | None = None
@@ -226,16 +230,12 @@ def generate_structured(
         except Exception as exc:
             last_error = exc
             logger.warning("generate_structured: attempt %d/%d API call failed: %s", attempt, retries + 1, exc)
-            # 429 fast-fail: if Groq tells us the wait is long, bail now.
-            wait_secs = _parse_rate_limit_wait(str(exc))
-            if wait_secs is not None and wait_secs > _RATE_LIMIT_FAST_FAIL_SECONDS:
+            if _is_rate_limit_error(exc):
                 logger.warning(
-                    "generate_structured: 429 rate-limit — Groq requests a %.0fs wait "
-                    "(> %ds threshold). Skipping remaining retries and falling back.",
-                    wait_secs,
-                    _RATE_LIMIT_FAST_FAIL_SECONDS,
+                    "generate_structured: 429 rate-limit detected for %s. Fast-failing immediately to agent fallback.",
+                    output_model.__name__,
                 )
-                break
+                raise RuntimeError(f"LLM 429 Rate Limit Exceeded: {exc}") from exc
 
         # Tier 3: Direct text completion + brace counting fallback
         try:
@@ -254,6 +254,9 @@ def generate_structured(
         except Exception as exc3:
             last_error = exc3
             logger.warning("generate_structured: Tier 3 fallback failed: %s", exc3)
+            if _is_rate_limit_error(exc3):
+                logger.warning("generate_structured: 429 rate-limit detected in Tier 3. Fast-failing immediately.")
+                raise RuntimeError(f"LLM 429 Rate Limit Exceeded in Tier 3: {exc3}") from exc3
 
         time.sleep(attempt * 1.5)
 
@@ -285,6 +288,9 @@ def generate_text(
         except Exception as exc:
             last_error = exc
             logger.warning("generate_text: attempt %d/%d failed: %s", attempt, retries + 1, exc)
+            if _is_rate_limit_error(exc):
+                logger.warning("generate_text: 429 rate-limit detected. Fast-failing immediately.")
+                raise RuntimeError(f"LLM 429 Rate Limit Exceeded: {exc}") from exc
             time.sleep(attempt * 1.5)
 
     logger.error("generate_text: giving up after %d attempts", retries + 1)

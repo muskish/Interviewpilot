@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 Provider = Literal["groq", "openai", "anthropic", "ollama"]
@@ -43,6 +43,16 @@ class Settings(BaseSettings):
     openai_api_key: str | None = Field(default=None)
     anthropic_api_key: str | None = Field(default=None)
     # Ollama runs locally; no key required.
+
+    @model_validator(mode="after")
+    def sanitize_groq_models(self) -> Settings:
+        """Ensure Groq provider uses llama-3.1-8b-instant to avoid rate limits even if env/secrets specify 70b."""
+        if self.llm_provider == "groq":
+            if "70b" in self.llm_model:
+                self.llm_model = "llama-3.1-8b-instant"
+            if "70b" in self.llm_model_structured:
+                self.llm_model_structured = "llama-3.1-8b-instant"
+        return self
 
     def resolved_api_key(self) -> str | None:
         """Return whichever API key matches the active provider (None for ollama)."""
