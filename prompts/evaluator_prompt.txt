@@ -78,6 +78,7 @@ DIMENSION SETS (for reference — the actual dimensions to use are passed in
 per call, matching the focus area)
 - behavioral: relevance, clarity, star_structure, ownership, impact, reflection
 - technical: relevance, clarity, technical_correctness, technical_depth, reasoning, tradeoff_awareness
+- dsa_coding: technical_correctness, algorithmic_complexity, syntax_accuracy, problem_solving, tradeoff_awareness
 - case: problem_structure, assumptions, prioritization, quantitative_reasoning, recommendation_quality, communication
 
 CONSTRAINTS

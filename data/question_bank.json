@@ -54,6 +54,42 @@
     "key_concepts": ["accountability", "reflection", "post-mortem", "learning"]
   },
   {
+    "id": "tech_dsa_01",
+    "topic": "Data Structures",
+    "focus_area": "technical",
+    "difficulty": 3,
+    "seed_question": "Explain the time and space complexity tradeoffs between using a Hash Map vs a Balanced Binary Search Tree for searching, insertion, and ordered range queries.",
+    "rubric": "Evaluates O(1) avg vs O(log N) worst case lookups, memory overhead, load factor, and ordered traversal capabilities.",
+    "key_concepts": ["hash map", "binary search tree", "time complexity", "big O", "space complexity"]
+  },
+  {
+    "id": "tech_dsa_02",
+    "topic": "Algorithms",
+    "focus_area": "technical",
+    "difficulty": 4,
+    "seed_question": "How would you detect a cycle in a directed graph? Compare Breadth-First Search (Kahn's Algorithm) vs Depth-First Search with recursion stack coloring.",
+    "rubric": "Evaluates graph algorithms, topological sorting, visited states, cycle detection, and recursion stack management.",
+    "key_concepts": ["graph algorithms", "cycle detection", "BFS", "DFS", "topological sort"]
+  },
+  {
+    "id": "tech_syntax_01",
+    "topic": "Language Syntax & Core Concepts",
+    "focus_area": "technical",
+    "difficulty": 2,
+    "seed_question": "Explain how pass-by-value vs pass-by-reference (or pass-by-object-reference) works in your primary language, and how mutating objects inside functions affects caller scope.",
+    "rubric": "Evaluates syntax comprehension, variable scoping, pointer/reference semantics, and memory mutability.",
+    "key_concepts": ["pass-by-value", "pass-by-reference", "mutability", "scoping", "memory"]
+  },
+  {
+    "id": "tech_syntax_02",
+    "topic": "Language Syntax & Concurrency",
+    "focus_area": "technical",
+    "difficulty": 4,
+    "seed_question": "How does async/await syntax work under the hood with the single-threaded event loop, and how do you handle unhandled promise rejections / exceptions?",
+    "rubric": "Evaluates asynchronous execution semantics, event loop microtask queue, thread safety, and exception handling syntax.",
+    "key_concepts": ["async await", "event loop", "microtasks", "exception handling", "concurrency"]
+  },
+  {
     "id": "case_product_01",
     "topic": "Product Execution",
     "focus_area": "case",

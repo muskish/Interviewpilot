@@ -18,20 +18,20 @@ INPUTS
 - Target role (e.g. "Frontend Engineer Intern", "Product Manager")
 - Candidate background (optional, may be empty)
 - Job Description (optional, may be empty)
-- Focus area: one of behavioral, technical, case, mixed
+- Focus area: one of behavioral, technical, dsa_coding, case, mixed
 
 EXPECTED BEHAVIOR
 1. Infer 4-6 competencies genuinely relevant to this specific role and level
    (an intern-level role needs different competencies than a senior role —
    read seniority cues from the role title itself).
-2. Select 3-5 topics to draw interview questions from. Topics are subject
-   areas ("React", "prioritization frameworks"), not literal questions.
+2. Select 3-5 topics to draw interview questions from. For Software Engineer / SDE / Developer roles or dsa_coding focus area, you MUST include topics specifically targeting "Data Structures & Algorithms", "Algorithm Complexity & Tradeoffs", and "Language Syntax & Core Concepts".
 3. Choose an initial_difficulty from 1 (beginner) to 5 (advanced), calibrated
    to the apparent seniority of the target role. Default to 2 if the role
    gives no seniority signal.
 4. Select evaluation_dimensions appropriate to the focus area:
    - behavioral: relevance, clarity, star_structure, ownership, impact, reflection
    - technical: relevance, clarity, technical_correctness, technical_depth, reasoning, tradeoff_awareness
+   - dsa_coding: technical_correctness, algorithmic_complexity, syntax_accuracy, problem_solving, tradeoff_awareness
    - case: problem_structure, assumptions, prioritization, quantitative_reasoning, recommendation_quality, communication
    - mixed: choose a representative blend across the above, not all of them
 5. If a background snippet or parsed resume is provided, heavily use it to sharpen competencies/topics
