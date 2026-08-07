@@ -32,6 +32,7 @@ faiss-cpu>=1.8.0
 scikit-learn>=1.4.0
 
 # --- Web Search & Utilities ---
+ddgs>=6.0.0
 duckduckgo-search>=6.0.0
 flake8>=7.0.0
 pytest>=8.0.0
