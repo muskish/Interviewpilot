@@ -38,6 +38,34 @@ def evaluate_answer(
     strategy: InterviewStrategy,
 ) -> EvaluationResult:
     """Evaluate candidate's answer against question, role, and focus area with fallback."""
+    # Deterministic Non-Answer Detection ("i dont know", "idk", skip, empty)
+    clean_ans = answer.strip().lower() if answer else ""
+    non_answer_triggers = (
+        "i dont know", "i don't know", "dont know", "don't know", "idk", "idont know",
+        "no idea", "not sure", "no clue", "pass", "skip", "no answer", "n/a", "none"
+    )
+    is_non_answer = (
+        not clean_ans
+        or clean_ans in non_answer_triggers
+        or any(clean_ans.startswith(p) for p in ("i dont know", "i don't know", "idk", "no idea", "not sure"))
+    )
+
+    if is_non_answer:
+        logger.info("Evaluator: detected explicit non-answer/skip, applying deterministic no_answer evaluation")
+        dims = strategy.evaluation_dimensions if (strategy and strategy.evaluation_dimensions) else ["clarity", "technical_correctness"]
+        return EvaluationResult(
+            dimension_scores={dim: 1.0 for dim in dims},
+            overall_score=1.0,
+            overall_level="poor",
+            strengths=[],
+            weaknesses=["Candidate stated they do not know or skipped the question."],
+            answer_status=AnswerStatus.NO_ANSWER,
+            recommended_action=RecommendedAction.SIMPLIFY,
+            follow_up_focus=f"Basic fundamentals of {question.topic}",
+            difficulty_adjustment=DifficultyAdjustment.DECREASE,
+            is_fallback=False,
+        )
+
     system_prompt = load_prompt("evaluator_prompt")
 
     # Multi-Language Code Sandbox Execution
@@ -104,8 +132,30 @@ def evaluate_answer(
             is_fallback=True,
         )
 
+    # Post-Processing Guardrails: Enforce score and difficulty alignment consistency
+    if result.answer_status == AnswerStatus.NO_ANSWER:
+        result.overall_score = 1.0
+        result.overall_level = "poor"
+        result.difficulty_adjustment = DifficultyAdjustment.DECREASE
+        result.recommended_action = RecommendedAction.SIMPLIFY
+    elif result.answer_status in (AnswerStatus.WEAK, AnswerStatus.INCORRECT, AnswerStatus.OFF_TOPIC):
+        result.overall_score = min(result.overall_score, 2.5)
+        if result.overall_score < 2.0:
+            result.overall_level = "poor"
+        else:
+            result.overall_level = "weak"
+        if result.difficulty_adjustment == DifficultyAdjustment.INCREASE:
+            result.difficulty_adjustment = DifficultyAdjustment.DECREASE
+    elif result.answer_status == AnswerStatus.STRONG:
+        if result.overall_score < 3.8:
+            result.overall_score = 4.0
+        result.overall_level = "strong"
+
     logger.info(
-        "Evaluator: status=%s action=%s overall_score=%.1f",
-        result.answer_status.value, result.recommended_action.value, result.overall_score,
+        "Evaluator: status=%s action=%s overall_score=%.1f diff_adj=%s",
+        result.answer_status.value,
+        result.recommended_action.value,
+        result.overall_score,
+        result.difficulty_adjustment.value,
     )
     return result

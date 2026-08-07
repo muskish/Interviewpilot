@@ -87,6 +87,13 @@ CONSTRAINTS
 - Never leave dimension_scores empty, and never add dimensions beyond what
   was provided.
 
+SCORE AND DIFFICULTY ALIGNMENT CONSTRAINTS (STRICT)
+- strong: overall_score 4.0 - 5.0, overall_level = "strong". difficulty_adjustment MUST be "increase" (unless already at max difficulty).
+- adequate: overall_score 3.0 - 3.9, overall_level = "adequate". difficulty_adjustment MUST be "maintain".
+- incomplete: overall_score 2.0 - 2.9, overall_level = "incomplete". difficulty_adjustment MUST be "maintain" or "decrease".
+- weak / incorrect / off_topic: overall_score 1.0 - 2.5, overall_level = "weak" or "poor". difficulty_adjustment MUST be "decrease".
+- no_answer ("I don't know", "idk", empty, skip): overall_score MUST be 1.0, all dimension_scores MUST be 1.0, overall_level = "poor", answer_status = "no_answer", recommended_action = "simplify", difficulty_adjustment MUST be "decrease". NEVER give high scores or difficulty increases to non-answers.
+
 HANDLING MESSY INPUT
 - Very short answers ("Not sure", "IDK", one word): answer_status = no_answer
   or weak depending on content; do not penalize length alone if the short
