@@ -10,7 +10,7 @@ from __future__ import annotations
 from models.evaluation import EvaluationResult, RecommendedAction
 from models.interview_state import InterviewState
 from models.interview_turn import InterviewerQuestion, QuestionType
-from services.llm_service import generate_structured, get_llm
+from services.llm_service import generate_structured, get_llm_structured
 from utils.logger import get_logger
 from utils.prompt_loader import load_prompt
 
