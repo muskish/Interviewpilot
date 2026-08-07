@@ -149,6 +149,63 @@ def _normalize_dict_for_enums(data: Any) -> Any:
     return data
 
 
+def _unwrap_schema_dict(data: Any) -> Any:
+    """If LLM wrapped output in 'properties' or 'value' schema dicts, unwrap them into a clean dict."""
+    if not isinstance(data, dict):
+        return data
+
+    target = data
+    if "properties" in data and isinstance(data["properties"], dict):
+        target = data["properties"]
+
+    unwrapped = {}
+    for k, v in target.items():
+        if k in ("$defs", "title", "type", "required"):
+            continue
+        if isinstance(v, dict) and "value" in v:
+            unwrapped[k] = v["value"]
+        else:
+            unwrapped[k] = v
+    return unwrapped
+
+
+def _get_clean_json_example(output_model: type[BaseModel]) -> str:
+    """Generate a clean, minimal JSON example without Pydantic schema noise ($defs, title, type)."""
+    fields = output_model.model_fields
+    sample = {}
+    for name, field_info in fields.items():
+        if name == "is_fallback":
+            continue
+        ann = field_info.annotation
+        if name == "dimension_scores":
+            sample[name] = {"clarity": 4.0, "technical_correctness": 4.0}
+        elif name == "overall_score":
+            sample[name] = 4.0
+        elif name == "overall_level":
+            sample[name] = "strong"
+        elif name == "strengths":
+            sample[name] = ["Clear explanation"]
+        elif name == "weaknesses":
+            sample[name] = ["Could provide more detail"]
+        elif name == "follow_up_focus":
+            sample[name] = "System scalability"
+        elif hasattr(ann, "__members__"):
+            sample[name] = list(ann.__members__.values())[0].value
+        elif ann is int:
+            sample[name] = 1
+        elif ann is float:
+            sample[name] = 4.0
+        elif ann is bool:
+            sample[name] = True
+        elif ann is str:
+            sample[name] = "text"
+        elif getattr(ann, "__origin__", None) is list:
+            sample[name] = ["item"]
+        else:
+            sample[name] = "value"
+    return json.dumps(sample, indent=2)
+
+
 _RATE_LIMIT_FAST_FAIL_SECONDS = 30  # If Groq says "wait > Xs", skip retries immediately.
 
 
@@ -199,8 +256,8 @@ def generate_structured(
     formatted_user_msg = user_message
     if "json" not in formatted_user_msg.lower():
         try:
-            schema_json = json.dumps(output_model.model_json_schema(), indent=2)
-            formatted_user_msg += f"\n\nRespond strictly with a JSON object matching this schema:\n{schema_json}"
+            example_json = _get_clean_json_example(output_model)
+            formatted_user_msg += f"\n\nRespond strictly with a JSON object matching this example format:\n{example_json}"
         except Exception:
             formatted_user_msg += "\n\nRespond strictly with a valid JSON object."
 
@@ -221,11 +278,13 @@ def generate_structured(
             if isinstance(result, output_model):
                 return result
             if isinstance(result, dict):
-                normalized = _normalize_dict_for_enums(result)
+                unwrapped = _unwrap_schema_dict(result)
+                normalized = _normalize_dict_for_enums(unwrapped)
                 return output_model.model_validate(normalized)
             if isinstance(result, str):
                 parsed = _extract_json(result)
-                normalized = _normalize_dict_for_enums(parsed)
+                unwrapped = _unwrap_schema_dict(parsed)
+                normalized = _normalize_dict_for_enums(unwrapped)
                 return output_model.model_validate(normalized)
         except Exception as exc:
             last_error = exc
@@ -242,12 +301,13 @@ def generate_structured(
             logger.info("generate_structured: attempting Tier 3 text completion fallback...")
             raw_text = generate_text(
                 llm,
-                system_prompt=system_prompt + "\nOUTPUT REQUIREMENT: Output strictly a single JSON object. No extra markdown, explanations, or commentary.",
+                system_prompt=system_prompt + "\nOUTPUT REQUIREMENT: Output strictly a single JSON object matching the requested fields. No extra markdown, explanations, or commentary.",
                 user_message=formatted_user_msg,
                 max_retries=0,
             )
             parsed_dict = _extract_json(raw_text)
-            normalized_dict = _normalize_dict_for_enums(parsed_dict)
+            unwrapped_dict = _unwrap_schema_dict(parsed_dict)
+            normalized_dict = _normalize_dict_for_enums(unwrapped_dict)
             validated = output_model.model_validate(normalized_dict)
             logger.info("generate_structured: Tier 3 fallback successfully parsed %s!", output_model.__name__)
             return validated
