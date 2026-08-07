@@ -15,7 +15,6 @@ from models.candidate import CandidateProfile, FocusArea
 from models.interview_state import InterviewState, InterviewStatus
 from orchestration.graph import run_answer_turn, run_start_interview
 from services.session_service import save_session
-from services.pdf_service import generate_report_pdf
 
 
 FONT_LINKS = """
@@ -499,16 +498,6 @@ def render_setup_screen():
             """,
             unsafe_allow_html=True,
         )
-        st.markdown(
-            """
-            <div class="ip-feat">
-                <div class="ip-feat-icon">📥</div>
-                <h4>PDF Export</h4>
-                <p>Download your full coaching report as a professional PDF document.</p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
 
     st.markdown("---")
 
@@ -747,7 +736,7 @@ def render_final_report_screen(state: InterviewState):
     else:
         st.success("Interview Complete!")
 
-    col_d1, col_d2, col_d3, col_r = st.columns([1, 1, 1, 1])
+    col_d1, col_d2, col_r = st.columns([1, 1, 1])
     with col_d1:
         if state.final_report:
             st.download_button(
@@ -758,19 +747,6 @@ def render_final_report_screen(state: InterviewState):
                 use_container_width=True,
             )
     with col_d2:
-        if state.final_report:
-            try:
-                pdf_bytes = generate_report_pdf(state)
-                st.download_button(
-                    label="Report (.pdf)",
-                    data=pdf_bytes,
-                    file_name=f"InterviewPilot_Report_{state.session_id}.pdf",
-                    mime="application/pdf",
-                    use_container_width=True,
-                )
-            except Exception as pdf_err:
-                st.warning("PDF export unavailable.")
-    with col_d3:
         st.download_button(
             label="Session (.json)",
             data=state.model_dump_json(indent=2),

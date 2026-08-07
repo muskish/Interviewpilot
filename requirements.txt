@@ -22,10 +22,9 @@ pydantic-settings>=2.2.0
 python-dotenv>=1.0.0
 pypdf>=4.2.0
 
-# --- Multimodal (Audio & PDF) ---
+# --- Multimodal (Audio) ---
 gTTS>=2.5.0
 SpeechRecognition>=3.10.0
-fpdf2>=2.7.9
 
 # --- Vector DB / Embeddings (RAG) ---
 faiss-cpu>=1.8.0
