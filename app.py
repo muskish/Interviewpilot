@@ -784,6 +784,20 @@ def render_final_report_screen(state: InterviewState):
 
     st.markdown("---")
 
+    # ── Fallback evaluation transparency banner ───────────────────────
+    fallback_turns = [
+        t for t in state.transcript
+        if t.evaluation and t.evaluation.is_fallback
+    ]
+    if fallback_turns:
+        st.warning(
+            f"⚠️ **Note:** {len(fallback_turns)} of {len(state.transcript)} turn evaluation(s) "
+            "used a **simplified scoring fallback** due to API rate limits — the LLM was "
+            "unavailable when those answers were graded. Scores shown for those turns "
+            "are static placeholders (3.0 / 5.0) and do not reflect real AI analysis. "
+            "You can re-run the interview when your Groq quota resets to get full evaluations."
+        )
+
     render_analytics_dashboard(state)
 
     st.markdown("---")
@@ -807,6 +821,8 @@ def render_final_report_screen(state: InterviewState):
             if turn.evaluation:
                 st.markdown(f"**Turn {turn.turn_number} — {turn.question.topic}:**")
                 st.markdown(f"- **Overall Score:** {turn.evaluation.overall_score:.1f}/5.0 ({turn.evaluation.overall_level})")
+                if turn.evaluation.is_fallback:
+                    st.caption("⚠️ Fallback score — API rate limit was active during this turn.")
                 st.markdown(f"- **Answer Status:** `{turn.evaluation.answer_status.value}`")
                 st.markdown(f"- **Recommended Action:** `{turn.evaluation.recommended_action.value}`")
                 if turn.evaluation.strengths:

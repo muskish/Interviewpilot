@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from models.candidate import CandidateProfile
 from models.interview_plan import InterviewStrategy
-from services.llm_service import generate_structured, get_llm
+from services.llm_service import generate_structured, get_llm_structured
 from utils.logger import get_logger
 from utils.prompt_loader import load_prompt
 
@@ -31,7 +31,7 @@ def create_strategy(candidate: CandidateProfile) -> InterviewStrategy:
     )
 
     logger.info("Strategist: planning for role=%r focus=%r", candidate.target_role, candidate.focus_area.value)
-    llm = get_llm()
+    llm = get_llm_structured()
     try:
         strategy = generate_structured(
             llm=llm,

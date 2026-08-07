@@ -12,6 +12,7 @@ import re
 from datetime import datetime, timezone
 
 from fpdf import FPDF
+from fpdf.enums import XPos, YPos
 
 
 # ── Colour palette (matches the warm UI theme) ────────────────────────
@@ -53,7 +54,7 @@ class _ReportPDF(FPDF):
         self.set_font("Helvetica", "B", 11)
         self.set_text_color(*_WHITE)
         self.set_xy(10, 4)
-        self.cell(0, 10, "InterviewPilot  |  AI Mock Interview Report", ln=True)
+        self.cell(0, 10, "InterviewPilot  |  AI Mock Interview Report", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         self.ln(6)
 
     # ── Footer ────────────────────────────────────────────────────────
@@ -91,7 +92,7 @@ def generate_report_pdf(state) -> bytes:
     # ── Title Block ───────────────────────────────────────────────────
     pdf.set_font("Helvetica", "B", 20)
     pdf.set_text_color(*_ACCENT)
-    pdf.cell(0, 12, "Interview Coaching Report", ln=True)
+    pdf.cell(0, 12, "Interview Coaching Report", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     pdf.ln(2)
 
     pdf.set_font("Helvetica", "", 10)
@@ -99,7 +100,7 @@ def generate_report_pdf(state) -> bytes:
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     role_txt = _clean_text(state.candidate.target_role)
     focus_txt = _clean_text(state.candidate.focus_area.value.capitalize())
-    pdf.cell(0, 6, f"Role: {role_txt}  |  Focus: {focus_txt}  |  Generated: {now}", ln=True)
+    pdf.cell(0, 6, f"Role: {role_txt}  |  Focus: {focus_txt}  |  Generated: {now}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     pdf.ln(4)
 
     # Accent line
@@ -119,7 +120,7 @@ def generate_report_pdf(state) -> bytes:
 
     pdf.set_font("Helvetica", "B", 12)
     pdf.set_text_color(*_TEXT_1)
-    pdf.cell(0, 8, "Session Summary", ln=True)
+    pdf.cell(0, 8, "Session Summary", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     pdf.ln(2)
 
     # Metric boxes
@@ -156,7 +157,7 @@ def generate_report_pdf(state) -> bytes:
         pdf.set_x(10)
         pdf.set_font("Helvetica", "B", 12)
         pdf.set_text_color(*_TEXT_1)
-        pdf.cell(0, 8, "Coaching Report", ln=True)
+        pdf.cell(0, 8, "Coaching Report", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.ln(2)
 
         pdf.set_font("Helvetica", "", 10)
@@ -204,7 +205,7 @@ def generate_report_pdf(state) -> bytes:
     pdf.add_page()
     pdf.set_font("Helvetica", "B", 12)
     pdf.set_text_color(*_TEXT_1)
-    pdf.cell(0, 8, "Full Conversation Transcript & Evaluations", ln=True)
+    pdf.cell(0, 8, "Full Conversation Transcript & Evaluations", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     pdf.ln(2)
 
     for turn in state.transcript:
@@ -214,15 +215,16 @@ def generate_report_pdf(state) -> bytes:
         pdf.ln(3)
 
         topic = _clean_text(turn.question.topic if turn.question else "General")
+        difficulty = turn.question.difficulty if turn.question else "?"
         pdf.set_font("Helvetica", "B", 10)
         pdf.set_text_color(*_ACCENT)
-        pdf.cell(0, 6, f"Turn {turn.turn_number}  -  {topic}  (Difficulty {turn.question.difficulty})", ln=True)
+        pdf.cell(0, 6, f"Turn {turn.turn_number}  -  {topic}  (Difficulty {difficulty})", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.ln(1)
 
         # Question
         pdf.set_font("Helvetica", "B", 9)
         pdf.set_text_color(*_TEXT_2)
-        pdf.cell(0, 5, "Interviewer:", ln=True)
+        pdf.cell(0, 5, "Interviewer:", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.set_font("Helvetica", "", 9)
         pdf.set_text_color(*_TEXT_1)
         q_text = _clean_text(turn.question.question if turn.question else "")
@@ -232,7 +234,7 @@ def generate_report_pdf(state) -> bytes:
         # Answer
         pdf.set_font("Helvetica", "B", 9)
         pdf.set_text_color(*_TEXT_2)
-        pdf.cell(0, 5, "Candidate:", ln=True)
+        pdf.cell(0, 5, "Candidate:", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.set_font("Helvetica", "", 9)
         pdf.set_text_color(*_TEXT_1)
         a_text = _clean_text(turn.answer)
@@ -247,7 +249,7 @@ def generate_report_pdf(state) -> bytes:
             pdf.set_font("Helvetica", "B", 9)
             pdf.set_text_color(*_TEXT_2)
             eval_info = _clean_text(f"Score: {e.overall_score:.1f}/5.0 ({e.overall_level})  |  Status: {e.answer_status.value}  |  Action: {e.recommended_action.value}")
-            pdf.cell(0, 5, eval_info, ln=True)
+            pdf.cell(0, 5, eval_info, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
             if e.strengths:
                 pdf.set_font("Helvetica", "", 8)

@@ -28,6 +28,14 @@ class Settings(BaseSettings):
 
     llm_provider: Provider = Field(default="groq")
     llm_model: str = Field(default="llama-3.3-70b-versatile")
+    llm_model_structured: str = Field(
+        default="llama-3.1-8b-instant",
+        description=(
+            "Model used for structured-output calls (evaluator, strategist). "
+            "Defaults to a lighter 8B model to reduce token quota pressure. "
+            "Only applied when llm_provider='groq'; other providers fall back to llm_model."
+        ),
+    )
     llm_temperature: float = Field(default=0.4, ge=0.0, le=2.0)
     llm_max_retries: int = Field(default=2, ge=0, le=5)
 

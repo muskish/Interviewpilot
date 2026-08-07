@@ -22,7 +22,7 @@ from models.evaluation import (
 from models.interview_plan import InterviewStrategy
 from models.interview_turn import InterviewerQuestion
 from utils.code_executor import extract_code_snippet, execute_code_snippet
-from services.llm_service import generate_structured, get_llm
+from services.llm_service import generate_structured, get_llm_structured
 from services.search_service import search_web
 from utils.logger import get_logger
 from utils.prompt_loader import load_prompt
@@ -81,7 +81,7 @@ def evaluate_answer(
     )
 
     logger.info("Evaluator: scoring answer for topic=%r difficulty=%d", question.topic, question.difficulty)
-    llm = get_llm()
+    llm = get_llm_structured()
     try:
         result = generate_structured(
             llm=llm,
@@ -101,6 +101,7 @@ def evaluate_answer(
             recommended_action=RecommendedAction.MOVE_ON,
             follow_up_focus="Next topic area",
             difficulty_adjustment=DifficultyAdjustment.MAINTAIN,
+            is_fallback=True,
         )
 
     logger.info(

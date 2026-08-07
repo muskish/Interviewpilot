@@ -44,3 +44,7 @@ class EvaluationResult(BaseModel):
     recommended_action: RecommendedAction
     follow_up_focus: str = Field(..., description="What the Interviewer should probe next, if probing.")
     difficulty_adjustment: DifficultyAdjustment
+    is_fallback: bool = Field(
+        default=False,
+        description="True when the LLM API was unavailable and a static fallback evaluation was used instead.",
+    )

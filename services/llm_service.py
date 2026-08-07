@@ -52,6 +52,31 @@ def get_llm(temperature: float | None = None) -> BaseChatModel:
     raise RuntimeError(f"Unknown LLM_PROVIDER: {provider}")
 
 
+def get_llm_structured(temperature: float | None = None) -> BaseChatModel:
+    """
+    Build a chat model optimised for structured-output calls (evaluator, strategist).
+
+    When the provider is Groq, uses `settings.llm_model_structured` (default:
+    llama-3.1-8b-instant) instead of the heavier main model, reducing per-call
+    token cost and daily quota pressure on Groq's free tier.
+    For all other providers the main `llm_model` is used unchanged.
+    """
+    temp = settings.llm_temperature if temperature is None else temperature
+    provider = settings.llm_provider
+
+    if provider == "groq":
+        from langchain_groq import ChatGroq
+        return ChatGroq(
+            api_key=settings.require_api_key(),
+            model=settings.llm_model_structured,
+            temperature=temp,
+        )
+
+    # For non-Groq providers the structured model name may not exist on their
+    # catalogue, so fall back transparently to the main model.
+    return get_llm(temperature=temperature)
+
+
 def _extract_json(text: str) -> dict:
     """Robustly extract and parse a JSON dict from raw LLM text using brace counting."""
     text = text.strip()
@@ -124,6 +149,26 @@ def _normalize_dict_for_enums(data: Any) -> Any:
     return data
 
 
+_RATE_LIMIT_FAST_FAIL_SECONDS = 30  # If Groq says "wait > Xs", skip retries immediately.
+
+
+def _parse_rate_limit_wait(error_str: str) -> float | None:
+    """
+    Parse a Groq 429 error message and return the suggested wait in seconds.
+
+    Groq formats the wait as:
+        "Please try again in 8m14.56s" or "Please try again in 514.56s"
+    Returns None if no parseable wait time is found.
+    """
+    # Pattern: Xm Ys  (e.g. "8m14.56s" or "1m0s")
+    m = re.search(r"try again in\s+(?:(\d+)m)?([\d.]+)s", error_str, re.IGNORECASE)
+    if m:
+        minutes = int(m.group(1)) if m.group(1) else 0
+        seconds = float(m.group(2))
+        return minutes * 60 + seconds
+    return None
+
+
 def generate_structured(
     llm: BaseChatModel,
     system_prompt: str,
@@ -138,6 +183,11 @@ def generate_structured(
     1. LangChain structured output (tool-calling API)
     2. json_mode fallback (Groq JSON format)
     3. Text generation + brace-count JSON extraction + Pydantic schema validation
+
+    429 fast-fail: if a rate-limit error carries a "try again in Xs" wait time
+    longer than _RATE_LIMIT_FAST_FAIL_SECONDS, the remaining retries are skipped
+    immediately — there is no point sleeping 1.5 s between calls that Groq will
+    reject for the next several minutes.
     """
     retries = settings.llm_max_retries if max_retries is None else max_retries
     last_error: Exception | None = None
@@ -176,6 +226,16 @@ def generate_structured(
         except Exception as exc:
             last_error = exc
             logger.warning("generate_structured: attempt %d/%d API call failed: %s", attempt, retries + 1, exc)
+            # 429 fast-fail: if Groq tells us the wait is long, bail now.
+            wait_secs = _parse_rate_limit_wait(str(exc))
+            if wait_secs is not None and wait_secs > _RATE_LIMIT_FAST_FAIL_SECONDS:
+                logger.warning(
+                    "generate_structured: 429 rate-limit — Groq requests a %.0fs wait "
+                    "(> %ds threshold). Skipping remaining retries and falling back.",
+                    wait_secs,
+                    _RATE_LIMIT_FAST_FAIL_SECONDS,
+                )
+                break
 
         # Tier 3: Direct text completion + brace counting fallback
         try:
