@@ -16,7 +16,7 @@
 - ⚡ **Multi-Language Code Execution Sandbox**: Candidate technical code submissions (Python, JavaScript, SQL) are safely executed in a subprocess sandbox with static linting (flake8).
 - 🔍 **Autonomous Web Search Fact-Checking**: The Evaluator agent uses DuckDuckGo search to verify complex candidate technical claims in real time.
 - 🧠 **FAISS Vector DB RAG Candidate Benchmarking**: Historical candidate performance profiles are embedded in a local FAISS vector store to compare candidate performance against peers.
-- 📄 **Professional PDF & JSON Export**: Download a styled A4 PDF coaching report with performance metrics, multi-dimensional skill breakdown, and full turn-by-turn transcripts.
+- 📄 **Markdown & JSON Export**: Download a comprehensive Markdown coaching report with performance metrics, multi-dimensional skill breakdown, session analytics, and full turn-by-turn JSON transcripts.
 - 🎨 **Modern Glassmorphic UI**: Streamlit web interface with warm light styling, custom branding, and responsive column layouts.
 
 ---
@@ -36,7 +36,7 @@ graph TD
     DecisionEngine -->|Next Question| Interviewer
     DecisionEngine -->|Max Turns Reached| Coach
     
-    Coach --> End((End / PDF Export))
+    Coach --> End((End / Report Export))
 ```
 
 ### Specialized Multi-Agent Roles
@@ -44,7 +44,7 @@ graph TD
 2. **Interviewer**: Generates context-aware, adaptive questions based on candidate history, code execution results, and Decision Engine directives.
 3. **Evaluator**: Grades candidate responses across technical correctness, clarity, depth, and reasoning; fact-checks claims using web search tool.
 4. **Decision Engine**: Non-LLM deterministic router that analyzes Evaluator scores to adjust difficulty (1-5) and select next-turn strategy.
-5. **Coach**: Synthesizes full session performance into a comprehensive markdown & PDF feedback report benchmarked against past candidates via FAISS RAG.
+5. **Coach**: Synthesizes full session performance into a comprehensive markdown feedback report benchmarked against past candidates via FAISS RAG.
 
 ---
 
@@ -97,7 +97,7 @@ streamlit run app.py
 The application features three main screens:
 1. **Setup Screen**: Choose target role, focus area, upload resume, enable webcam/voice practice modes.
 2. **Interactive Session**: Practice answering adaptive questions via text or voice with live camera feed on left.
-3. **Coaching Report & Analytics**: View turn-by-turn trajectory charts, multi-dimensional skill breakdown, peer benchmark comparisons, and download Markdown, JSON, or PDF reports.
+3. **Coaching Report & Analytics**: View turn-by-turn trajectory charts, multi-dimensional skill breakdown, peer benchmark comparisons, and download Markdown or JSON reports.
 
 ---
 
@@ -134,6 +134,6 @@ We have recorded example JSON session transcripts in the `examples/` directory t
 
 - [x] **Secret Keys**: `.env` is listed in `.gitignore` and has never been committed.
 - [x] **Environment Config**: `.env.example` contains clear templates for Groq, OpenAI, Anthropic, or Ollama.
-- [x] **Dependencies**: All packages (Streamlit, LangGraph, FAISS, fpdf2, gTTS, etc.) are pinned in `requirements.txt`.
+- [x] **Dependencies**: All packages (Streamlit, LangGraph, FAISS, gTTS, etc.) are pinned in `requirements.txt`.
 - [x] **Asset Paths**: Logo and assets use clean relative pathing (`assets/logo.png`).
 - [x] **Clean Working Tree**: All features committed to Git.
