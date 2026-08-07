@@ -74,7 +74,8 @@ graph TD
    Open `.env` and fill in your preferred LLM provider details.
    ```env
    LLM_PROVIDER=groq
-   LLM_MODEL=llama-3.3-70b-versatile
+   LLM_MODEL=llama-3.1-8b-instant
+   LLM_MODEL_STRUCTURED=llama-3.1-8b-instant
    GROQ_API_KEY=your_groq_api_key_here
    ```
 

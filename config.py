@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     )
 
     llm_provider: Provider = Field(default="groq")
-    llm_model: str = Field(default="llama-3.3-70b-versatile")
+    llm_model: str = Field(default="llama-3.1-8b-instant")
     llm_model_structured: str = Field(
         default="llama-3.1-8b-instant",
         description=(
