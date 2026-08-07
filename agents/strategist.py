@@ -41,20 +41,12 @@ def create_strategy(candidate: CandidateProfile) -> InterviewStrategy:
         )
     except Exception as exc:
         logger.error("Strategist failed to generate strategy via LLM, using fallback: %s", exc)
-        is_sde = any(k in candidate.target_role.lower() for k in ["software", "sde", "developer", "engineer", "coder"])
-        if candidate.focus_area.value == "dsa_coding" or is_sde:
-            topics = ["Data Structures & Algorithms", "Language Syntax & Core Concepts", "System Design & Complexity"]
-            dims = ["technical_correctness", "algorithmic_complexity", "syntax_accuracy", "problem_solving"]
-        else:
-            topics = [candidate.target_role, candidate.focus_area.value, "Problem Solving"]
-            dims = ["technical_correctness", "clarity", "reasoning"]
-
         strategy = InterviewStrategy(
             role_summary=f"Interview plan for {candidate.target_role}",
-            competencies=[candidate.focus_area.value, "Data Structures & Algorithms", "Language Syntax"],
+            competencies=[candidate.focus_area.value, "Problem Solving", "System Architecture"],
             initial_difficulty=2,
-            topics=topics,
-            evaluation_dimensions=dims,
+            topics=[candidate.target_role, candidate.focus_area.value, "System Design"],
+            evaluation_dimensions=["technical_correctness", "clarity", "reasoning"],
         )
 
     logger.info(

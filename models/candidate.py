@@ -10,7 +10,6 @@ from pydantic import BaseModel, Field
 class FocusArea(str, Enum):
     BEHAVIORAL = "behavioral"
     TECHNICAL = "technical"
-    DSA_CODING = "dsa_coding"
     CASE = "case"
     MIXED = "mixed"
 
