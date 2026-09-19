@@ -33,24 +33,7 @@ def get_llm(temperature: float | None = None) -> BaseChatModel:
     temp = settings.llm_temperature if temperature is None else temperature
     provider = settings.llm_provider
 
-    if provider == "groq":
-        from langchain_groq import ChatGroq
-        return ChatGroq(api_key=settings.require_api_key(), model=settings.llm_model, temperature=temp)
-
-    if provider == "openai":
-        from langchain_openai import ChatOpenAI
-        return ChatOpenAI(api_key=settings.require_api_key(), model=settings.llm_model, temperature=temp)
-
-    if provider == "openrouter":
-        from langchain_openai import ChatOpenAI
-        return ChatOpenAI(
-            api_key=settings.require_api_key(),
-            model=settings.llm_model,
-            temperature=temp,
-            openai_api_base="https://openrouter.ai/api/v1",
-        )
-
-    if provider == "gemini":
+    if provider == "gemini" or True:
         from langchain_openai import ChatOpenAI
         return ChatOpenAI(
             api_key=settings.require_api_key(),

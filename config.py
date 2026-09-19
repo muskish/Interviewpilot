@@ -16,7 +16,7 @@ from typing import Literal
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-Provider = Literal["groq", "openai", "anthropic", "ollama", "openrouter", "gemini"]
+Provider = Literal["gemini", "groq", "openai", "anthropic", "ollama", "openrouter"]
 
 
 class Settings(BaseSettings):
@@ -31,34 +31,22 @@ class Settings(BaseSettings):
     llm_temperature: float = Field(default=0.4, ge=0.0, le=2.0)
     llm_max_retries: int = Field(default=2, ge=0, le=5)
 
-    openai_api_key: str | None = Field(default=None)
-    anthropic_api_key: str | None = Field(default=None)
-    openrouter_api_key: str | None = Field(default=None)
     gemini_api_key: str | None = Field(default=None)
     google_api_key: str | None = Field(default=None)
-    # Ollama runs locally; no key required.
 
     def resolved_api_key(self) -> str | None:
-        """Return whichever API key matches the active provider (None for ollama)."""
-        return {
-            "gemini": self.gemini_api_key or self.google_api_key,
-            "openai": self.openai_api_key,
-            "anthropic": self.anthropic_api_key,
-            "ollama": None,
-            "openrouter": self.openrouter_api_key or self.openai_api_key,
-            "groq": None,
-        }[self.llm_provider]
+        """Return the active Gemini / Google API key."""
+        import os
+        key = self.gemini_api_key or self.google_api_key or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+        return key
 
     def require_api_key(self) -> str:
-        """Fetch the active provider's API key, or raise a clear, actionable error."""
-        if self.llm_provider == "ollama":
-            return ""  # not applicable
+        """Fetch the Gemini API key, or raise a clear, actionable error."""
         key = self.resolved_api_key()
         if not key:
-            env_var = f"{self.llm_provider.upper()}_API_KEY"
             raise RuntimeError(
-                f"LLM_PROVIDER is set to '{self.llm_provider}' but {env_var} is missing. "
-                f"Set it in your .env file (see .env.example)."
+                "GEMINI_API_KEY is missing. "
+                "Please set GEMINI_API_KEY in your .env file or Streamlit Cloud Secrets."
             )
         return key
 
