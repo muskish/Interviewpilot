@@ -35,6 +35,18 @@ def test_openai() -> None:
     print("Response:", resp.choices[0].message.content)
 
 
+def test_openrouter() -> None:
+    from openai import OpenAI
+
+    client = OpenAI(api_key=settings.require_api_key(), base_url="https://openrouter.ai/api/v1")
+    resp = client.chat.completions.create(
+        model=settings.llm_model,
+        messages=[{"role": "user", "content": "Reply with exactly: pong"}],
+        max_tokens=10,
+    )
+    print("Response:", resp.choices[0].message.content)
+
+
 def test_anthropic() -> None:
     from anthropic import Anthropic
 
@@ -64,6 +76,7 @@ if __name__ == "__main__":
     dispatch = {
         "groq": test_groq,
         "openai": test_openai,
+        "openrouter": test_openrouter,
         "anthropic": test_anthropic,
         "ollama": test_ollama,
     }

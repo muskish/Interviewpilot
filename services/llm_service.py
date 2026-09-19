@@ -41,6 +41,15 @@ def get_llm(temperature: float | None = None) -> BaseChatModel:
         from langchain_openai import ChatOpenAI
         return ChatOpenAI(api_key=settings.require_api_key(), model=settings.llm_model, temperature=temp)
 
+    if provider == "openrouter":
+        from langchain_openai import ChatOpenAI
+        return ChatOpenAI(
+            api_key=settings.require_api_key(),
+            model=settings.llm_model,
+            temperature=temp,
+            openai_api_base="https://openrouter.ai/api/v1",
+        )
+
     if provider == "anthropic":
         from langchain_anthropic import ChatAnthropic
         return ChatAnthropic(api_key=settings.require_api_key(), model=settings.llm_model, temperature=temp)
@@ -53,27 +62,7 @@ def get_llm(temperature: float | None = None) -> BaseChatModel:
 
 
 def get_llm_structured(temperature: float | None = None) -> BaseChatModel:
-    """
-    Build a chat model optimised for structured-output calls (evaluator, strategist).
-
-    When the provider is Groq, uses `settings.llm_model_structured` (default:
-    llama-3.1-8b-instant) instead of the heavier main model, reducing per-call
-    token cost and daily quota pressure on Groq's free tier.
-    For all other providers the main `llm_model` is used unchanged.
-    """
-    temp = settings.llm_temperature if temperature is None else temperature
-    provider = settings.llm_provider
-
-    if provider == "groq":
-        from langchain_groq import ChatGroq
-        return ChatGroq(
-            api_key=settings.require_api_key(),
-            model=settings.llm_model_structured,
-            temperature=temp,
-        )
-
-    # For non-Groq providers the structured model name may not exist on their
-    # catalogue, so fall back transparently to the main model.
+    """Build a chat model for structured-output calls (evaluator, strategist) using the single main LLM_MODEL."""
     return get_llm(temperature=temperature)
 
 

@@ -16,7 +16,7 @@ from typing import Literal
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-Provider = Literal["groq", "openai", "anthropic", "ollama"]
+Provider = Literal["groq", "openai", "anthropic", "ollama", "openrouter"]
 
 
 class Settings(BaseSettings):
@@ -27,31 +27,22 @@ class Settings(BaseSettings):
     )
 
     llm_provider: Provider = Field(default="groq")
-    llm_model: str = Field(default="llama-3.1-8b-instant")
-    llm_model_structured: str = Field(
-        default="llama-3.1-8b-instant",
-        description=(
-            "Model used for structured-output calls (evaluator, strategist). "
-            "Defaults to a lighter 8B model to reduce token quota pressure. "
-            "Only applied when llm_provider='groq'; other providers fall back to llm_model."
-        ),
-    )
+    llm_model: str = Field(default="openai/gpt-oss-120b")
     llm_temperature: float = Field(default=0.4, ge=0.0, le=2.0)
     llm_max_retries: int = Field(default=2, ge=0, le=5)
 
     groq_api_key: str | None = Field(default=None)
     openai_api_key: str | None = Field(default=None)
     anthropic_api_key: str | None = Field(default=None)
+    openrouter_api_key: str | None = Field(default=None)
     # Ollama runs locally; no key required.
 
     @model_validator(mode="after")
     def sanitize_groq_models(self) -> Settings:
-        """Ensure Groq provider uses llama-3.1-8b-instant to avoid rate limits even if env/secrets specify 70b."""
+        """Ensure Groq provider uses llama-3.1-8b-instant to avoid rate limits if env/secrets specify legacy 70b."""
         if self.llm_provider == "groq":
             if "70b" in self.llm_model:
                 self.llm_model = "llama-3.1-8b-instant"
-            if "70b" in self.llm_model_structured:
-                self.llm_model_structured = "llama-3.1-8b-instant"
         return self
 
     def resolved_api_key(self) -> str | None:
@@ -61,6 +52,7 @@ class Settings(BaseSettings):
             "openai": self.openai_api_key,
             "anthropic": self.anthropic_api_key,
             "ollama": None,
+            "openrouter": self.openrouter_api_key or self.openai_api_key,
         }[self.llm_provider]
 
     def require_api_key(self) -> str:
