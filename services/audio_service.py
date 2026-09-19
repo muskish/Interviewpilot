@@ -13,7 +13,6 @@ import tempfile
 from typing import Any
 
 from gtts import gTTS
-from groq import Groq
 from openai import OpenAI
 
 from dotenv import load_dotenv
@@ -67,33 +66,20 @@ def _transcribe_free_google(audio_bytes: bytes) -> str | None:
 
 def transcribe_audio(audio_bytes: bytes) -> str | None:
     """
-    Transcribe candidate's recorded audio into text.
-    Tries Groq Whisper -> OpenAI Whisper -> Free Google SpeechRecognition fallback.
+    Transcribe candidate's recorded audio into text using Google Speech Recognition or OpenAI Whisper.
     """
     if not audio_bytes:
         return None
         
-    groq_api_key = os.getenv("GROQ_API_KEY")
     openai_api_key = os.getenv("OPENAI_API_KEY")
 
     try:
         transcribed_text = None
         
-        # 1. Try Groq Whisper First
-        if groq_api_key:
-            try:
-                client = Groq(api_key=groq_api_key)
-                transcription = client.audio.transcriptions.create(
-                    file=("speech.wav", audio_bytes, "audio/wav"),
-                    model="whisper-large-v3-turbo",
-                    response_format="text",
-                )
-                transcribed_text = transcription
-                logger.info("Transcribed via Groq Whisper successfully.")
-            except Exception as e:
-                logger.error("Groq Whisper API failed: %s", e)
-                
-        # 2. Fallback to OpenAI Whisper
+        # 1. Try Free Google SpeechRecognition First
+        transcribed_text = _transcribe_free_google(audio_bytes)
+        
+        # 2. Fallback to OpenAI Whisper if available
         if not transcribed_text and openai_api_key:
             try:
                 client = OpenAI(api_key=openai_api_key)
@@ -107,10 +93,6 @@ def transcribe_audio(audio_bytes: bytes) -> str | None:
             except Exception as e:
                 logger.error("OpenAI Whisper API failed: %s", e)
 
-        # 3. Fallback to 100% Free Google SpeechRecognition
-        if not transcribed_text:
-            transcribed_text = _transcribe_free_google(audio_bytes)
-            
         return transcribed_text.strip() if transcribed_text else None
         
     except Exception as exc:

@@ -50,6 +50,15 @@ def get_llm(temperature: float | None = None) -> BaseChatModel:
             openai_api_base="https://openrouter.ai/api/v1",
         )
 
+    if provider == "gemini":
+        from langchain_openai import ChatOpenAI
+        return ChatOpenAI(
+            api_key=settings.require_api_key(),
+            model=settings.llm_model,
+            temperature=temp,
+            openai_api_base="https://generativelanguage.googleapis.com/v1beta/openai/",
+        )
+
     if provider == "anthropic":
         from langchain_anthropic import ChatAnthropic
         return ChatAnthropic(api_key=settings.require_api_key(), model=settings.llm_model, temperature=temp)
@@ -120,11 +129,19 @@ def _extract_json(text: str) -> dict:
 
 
 def _normalize_dict_for_enums(data: Any) -> Any:
-    """Recursively convert uppercase Enum values to lowercase for Pydantic enum matching."""
+    """Recursively convert Enum values and normalize unexpected string literals for Pydantic enum matching."""
+    valid_question_types = {"opening", "follow_up", "new_topic", "clarification", "simplified"}
+
     if isinstance(data, dict):
         new_dict = {}
         for k, v in data.items():
-            if isinstance(v, str) and v.isupper() and "_" in v:
+            if k == "question_type" and isinstance(v, str):
+                v_clean = v.lower().strip()
+                if v_clean not in valid_question_types:
+                    new_dict[k] = "new_topic"
+                else:
+                    new_dict[k] = v_clean
+            elif isinstance(v, str) and v.isupper() and "_" in v:
                 new_dict[k] = v.lower()
             elif isinstance(v, str) and v.isupper() and len(v) < 20:
                 new_dict[k] = v.lower()

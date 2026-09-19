@@ -16,7 +16,7 @@ from typing import Literal
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-Provider = Literal["groq", "openai", "anthropic", "ollama", "openrouter"]
+Provider = Literal["groq", "openai", "anthropic", "ollama", "openrouter", "gemini"]
 
 
 class Settings(BaseSettings):
@@ -26,33 +26,27 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    llm_provider: Provider = Field(default="groq")
-    llm_model: str = Field(default="openai/gpt-oss-120b")
+    llm_provider: Provider = Field(default="gemini")
+    llm_model: str = Field(default="gemini-2.5-flash")
     llm_temperature: float = Field(default=0.4, ge=0.0, le=2.0)
     llm_max_retries: int = Field(default=2, ge=0, le=5)
 
-    groq_api_key: str | None = Field(default=None)
     openai_api_key: str | None = Field(default=None)
     anthropic_api_key: str | None = Field(default=None)
     openrouter_api_key: str | None = Field(default=None)
+    gemini_api_key: str | None = Field(default=None)
+    google_api_key: str | None = Field(default=None)
     # Ollama runs locally; no key required.
-
-    @model_validator(mode="after")
-    def sanitize_groq_models(self) -> Settings:
-        """Ensure Groq provider uses llama-3.1-8b-instant to avoid rate limits if env/secrets specify legacy 70b."""
-        if self.llm_provider == "groq":
-            if "70b" in self.llm_model:
-                self.llm_model = "llama-3.1-8b-instant"
-        return self
 
     def resolved_api_key(self) -> str | None:
         """Return whichever API key matches the active provider (None for ollama)."""
         return {
-            "groq": self.groq_api_key,
+            "gemini": self.gemini_api_key or self.google_api_key,
             "openai": self.openai_api_key,
             "anthropic": self.anthropic_api_key,
             "ollama": None,
             "openrouter": self.openrouter_api_key or self.openai_api_key,
+            "groq": None,
         }[self.llm_provider]
 
     def require_api_key(self) -> str:

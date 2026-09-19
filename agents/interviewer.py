@@ -122,8 +122,19 @@ def generate_question(
     except Exception as exc:
         logger.error("Interviewer failed to generate question via LLM, using fallback: %s", exc)
         q_type = QuestionType.OPENING if state.current_turn == 0 else QuestionType.NEW_TOPIC
+        
+        fallback_templates = [
+            f"Could you explain your core approach and key technical considerations when working with {target_topic}?",
+            f"Walk me through a real-world scenario where you had to solve a challenging problem related to {target_topic}.",
+            f"What best practices and architectural trade-offs do you prioritize when implementing {target_topic} in production?",
+            f"Can you discuss how you handle edge cases, error handling, and performance optimization in {target_topic}?",
+            f"What tools, design patterns, or testing strategies do you rely on when developing systems involving {target_topic}?",
+        ]
+        template_idx = state.current_turn % len(fallback_templates)
+        selected_q = fallback_templates[template_idx]
+
         question = InterviewerQuestion(
-            question=f"Could you explain your technical experience and key engineering principles when working with {target_topic}?",
+            question=selected_q,
             question_type=q_type,
             topic=target_topic,
             difficulty=target_difficulty,
@@ -135,7 +146,7 @@ def generate_question(
             "Interviewer: LLM returned incomplete/truncated question %r; substituting complete question.",
             question.question,
         )
-        question.question = f"Could you explain your technical experience and key engineering principles when working with {target_topic}?"
+        question.question = f"Could you walk me through your engineering experience and key design choices when implementing {target_topic}?"
 
     logger.info(
         "Interviewer: generated question type=%s topic=%r diff=%d",

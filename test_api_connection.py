@@ -47,6 +47,21 @@ def test_openrouter() -> None:
     print("Response:", resp.choices[0].message.content)
 
 
+def test_gemini() -> None:
+    from openai import OpenAI
+
+    client = OpenAI(
+        api_key=settings.require_api_key(),
+        base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+    )
+    resp = client.chat.completions.create(
+        model=settings.llm_model,
+        messages=[{"role": "user", "content": "Reply with exactly: pong"}],
+        max_tokens=10,
+    )
+    print("Response:", resp.choices[0].message.content)
+
+
 def test_anthropic() -> None:
     from anthropic import Anthropic
 
@@ -77,6 +92,7 @@ if __name__ == "__main__":
         "groq": test_groq,
         "openai": test_openai,
         "openrouter": test_openrouter,
+        "gemini": test_gemini,
         "anthropic": test_anthropic,
         "ollama": test_ollama,
     }
